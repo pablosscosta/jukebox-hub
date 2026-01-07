@@ -1,0 +1,19 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  username: jukebox_hub
+  password: admin
+  host: localhost
+  pool: 5
+
+development:
+  <<: *default
+  database: jukebox_hub_development
+
+test:
+  <<: *default
+  database: jukebox_hub_test
+
+production:
+  <<: *default
+  database: jukebox_hub_production
