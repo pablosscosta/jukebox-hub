@@ -21,6 +21,37 @@ Participantes acessam esse link/QR code e podem adicionar músicas à fila, resp
 - Atualizações em tempo real via SSE
 - Encerrar sessão
 
+## Como Executar
+### Pré-requisitos
+
+Certifique-se de ter os seguintes componentes instalados e configurados:
+
+- [Ruby](https://www.ruby-lang.org/en/documentation/installation/)  
+- [Rails](https://guides.rubyonrails.org/getting_started.html)  
+- [PostgreSQL](https://www.postgresql.org/download/)  
+
+Verifique se o PostgreSQL está rodando localmente antes de iniciar o servidor Rails.  
+Documentação oficial sobre inicialização e gerenciamento do servidor: [https://www.postgresql.org/docs/current/app-pg-ctl.html](https://www.postgresql.org/docs/current/app-pg-ctl.html)
+
+- Dependências instaladas (instala todas as gems listadas no Gemfile):
+
+```
+bundle install
+```
+### Configuração do banco
+- Criação e migração:
+```
+rails db:create
+rails db:migrate
+```
+
+### Subir o servidor
+- Inicie o servidor Rails
+```
+rails s
+```
+- O backend estará disponível em `http://localhost:3000.`
+
 ## Documentação
 Documentos adicionais estão disponíveis em `docs/`:
 - [Arquitetura](docs/arquitetura.md)
