@@ -21,6 +21,11 @@ Participantes acessam esse link/QR code e podem adicionar músicas à fila, resp
 - Atualizações em tempo real via SSE
 - Encerrar sessão
 
+## Status do Projeto
+Backend MVP implementado em Ruby on Rails.  
+Funcionalidades básicas: sessões, usuários, fila de músicas e marcação de músicas como tocadas.
+
+
 ## Como Executar
 ### Pré-requisitos
 
