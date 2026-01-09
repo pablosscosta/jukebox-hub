@@ -5,6 +5,6 @@ class QueueItem < ApplicationRecord
   validates :status, inclusion: { in: %w[Pending Playing Played] }
 
   def mark_as_played!
-    update(status: "Played", added_at: Time.current)
+    update(status: "Played", played_at: Time.current)
   end
 end
