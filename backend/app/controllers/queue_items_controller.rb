@@ -1,6 +1,6 @@
 class QueueItemsController < ApplicationController
   before_action :set_session
-  before_action :set_queue_item, only: [:update]
+  before_action :set_queue_item, only: [:update, :mark_as_played]
 
   def index
     items = @session.queue_items.order(created_at: :asc)
@@ -18,6 +18,14 @@ class QueueItemsController < ApplicationController
 
   def update
     if @queue_item.update(queue_item_params)
+      render json: @queue_item
+    else
+      render json: { errors: @queue_item.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  def mark_as_played
+    if @queue_item.update(status: "Played", played_at: Time.current)
       render json: @queue_item
     else
       render json: { errors: @queue_item.errors.full_messages }, status: :unprocessable_entity
