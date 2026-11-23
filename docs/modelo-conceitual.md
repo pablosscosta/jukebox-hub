@@ -1,71 +1,66 @@
 # Modelo Conceitual
 
 ## Visão Geral
-O Modelo Conceitual descreve as principais entidades, atributos e regras de negócio da aplicação **Jukebox Hub**.  
-Ele representa uma visão abstrata do sistema, sem detalhes de implementação em banco de dados ou código, servindo como referência para design e desenvolvimento.
+Descreve as entidades, atributos e regras de negócio do **Jukebox Hub**, sem detalhes de banco ou código.
+Os nomes seguem o código: `Party` (antes "Sessão") e `Participant` (antes "Usuário") — ver
+[ADR 0003](adr/0003-nomes-party-participant.md).
 
 ---
 
 ## Entidades
 
-### Sessão (Session)
-Representa uma sessão ativa da jukebox.
+### Party
+Uma sessão da jukebox, criada por um host autenticado no Spotify.
 
-- **id**: identificador único da sessão  
-- **hostUserId**: identificador do usuário host (Spotify)  
-- **deviceId**: dispositivo ativo do Spotify  
-- **sessionName**: nome atribuído pelo host à sessão  
-- **shareLink**: link único para compartilhamento da sessão  
-- **qrCodeUrl**: QR code gerado para acesso rápido  
-- **status**: estado da sessão (`Active` | `Ended`)  
-- **createdAt**: data/hora de criação  
-- **users**: coleção de participantes  
-- **queue**: coleção de músicas na fila  
+- **id**: identificador público e não sequencial (usado no link de convite)
+- **name**: nome atribuído pelo host
+- **spotifyUserId**: usuário Spotify do host
+- **deviceId**: dispositivo Spotify onde a música toca
+- **status**: `active` | `ended`
+- **expiresAt**: momento em que a party expira automaticamente
+- **createdAt**: data/hora de criação
 
----
+O link de compartilhamento e o QR code são **derivados** do `id` (não são armazenados).
+Os tokens OAuth do host ficam guardados criptografados e nunca são expostos pela API.
 
-### Usuário (User)
-Representa um participante que acessa a sessão via link ou QR code.
+### Participant
+Um convidado que entrou na party pelo link ou QR code. Não tem login.
 
-- **id**: identificador único (gerado automaticamente pelo sistema)  
-- **displayName**: nome opcional do participante  
-- **joinedAt**: data/hora de entrada na sessão  
-- **lastActions**: histórico de ações (para controle de limite de músicas consecutivas)  
+- **id**: identificador único
+- **displayName**: nome opcional
+- **joinedAt**: data/hora de entrada
 
----
+O participante recebe um token anônimo ao entrar e o usa para se identificar nas requisições.
+O host também é um participante da própria party.
 
-### Item da Fila (QueueItem)
-Representa uma música adicionada à fila.
+### QueueItem
+Uma música adicionada à fila.
 
-- **id**: identificador único  
-- **trackId**: identificador da faixa no Spotify  
-- **addedByUserId**: identificador do usuário que adicionou  
-- **addedAt**: data/hora de inclusão  
-- **status**: estado do item (`Pending` | `Playing` | `Played`)  
+- **id**: identificador único
+- **trackId**: identificador da faixa no Spotify
+- **title / artist / durationMs**: metadados copiados do Spotify no momento da inclusão
+- **addedBy**: participante que adicionou
+- **status**: `pending` | `playing` | `played` | `removed`
+- **addedAt / startedAt**: datas de inclusão e de início da reprodução
 
 ---
 
 ## Regras de Negócio
-- **Fila FIFO**: músicas são tocadas na ordem em que foram adicionadas.  
-- **Sem duplicatas simultâneas**: não é permitido adicionar a mesma faixa se já estiver na fila.  
-- **Limite de músicas consecutivas por dispositivo/usuário**: um participante não pode adicionar mais de duas músicas seguidas.  
-- **Sessão efêmera**: no MVP, as sessões são mantidas apenas em memória.  
-- **Playback controlado pelo host**: apenas o host pode avançar ou encerrar a sessão.  
+- **Fila FIFO**: os itens `pending` tocam na ordem de `addedAt`.
+- **Sem duplicatas simultâneas**: uma faixa não pode ser adicionada se já estiver `pending` ou `playing`
+  na mesma party. Depois de tocada, pode voltar à fila. Garantida também por índice único parcial no banco.
+- **Limite de músicas consecutivas**: um participante não pode ter mais de **2** músicas seguidas no final
+  da fila de pendentes.
+- **Party efêmera**: a party expira após um período sem atividade (padrão: 6h) e então é encerrada;
+  um job remove os dados de parties encerradas. Ver [ADR 0002](adr/0002-postgresql-party-efemera.md).
+- **Controle do host**: apenas o host pode pular faixa, remover itens da fila e encerrar a party.
+- **Party encerrada é somente leitura**: não aceita novos participantes nem músicas.
 
 ---
 
 ## Relacionamentos
-- **Sessão → Usuários**: uma sessão possui vários participantes.  
-- **Sessão → Fila**: uma sessão possui uma fila de músicas.  
-- **Usuário → Item da Fila**: cada música adicionada é associada ao usuário que a incluiu.  
-
-Representação simplificada:
-
 ```text
-Session
- ├── Users [*]
- │     └── User (id, displayName, joinedAt)
- └── Queue [*]
-       └── QueueItem (id, trackId, addedByUserId, status)
+Party
+ ├── Participants [*]
+ └── QueueItems [*] ──> addedBy: Participant
 ```
-
