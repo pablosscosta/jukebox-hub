@@ -1,2 +1,13 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Local API collections
 .postman
 postman
