@@ -39,10 +39,11 @@ O link de compartilhamento e o QR code são **derivados** do `id` (não são arm
 Um convidado que entrou na party pelo link ou QR code. Não tem login.
 
 - **id**: identificador único
-- **displayName**: nome opcional
+- **displayName**: nome escolhido ao entrar (opcional; sem nome vira "Convidado N", até 40 caracteres)
 - **joinedAt**: data/hora de entrada
 
-O participante recebe um token anônimo ao entrar e o usa para se identificar nas requisições.
+O participante recebe um token anônimo ao entrar e o usa para se identificar nas requisições. Como no
+host, o banco guarda só o hash do token. O token vale enquanto a party estiver ativa.
 O host também é um participante da própria party.
 
 ### QueueItem

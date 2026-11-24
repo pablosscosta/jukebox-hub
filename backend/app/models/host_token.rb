@@ -1,6 +1,7 @@
-# Random tokens that identify a host to our API. Only the digest is stored, so a database
-# leak does not give access to anyone's account.
+# Random tokens that identify a host to our API (see DigestibleToken).
 class HostToken < ApplicationRecord
+  include DigestibleToken
+
   LIFETIMES = {
     "login_code" => 1.minute,
     "access" => 7.days
@@ -18,7 +19,7 @@ class HostToken < ApplicationRecord
   class << self
     # Creates a token and returns the raw value. It is the only time the raw value exists.
     def issue!(host:, kind:)
-      raw = SecureRandom.urlsafe_base64(32)
+      raw = generate_token
       create!(host:, kind:, token_digest: digest(raw), expires_at: LIFETIMES.fetch(kind.to_s).from_now)
       raw
     end
@@ -36,10 +37,6 @@ class HostToken < ApplicationRecord
       return unless token && where(id: token.id).delete_all == 1
 
       token.host
-    end
-
-    def digest(raw)
-      OpenSSL::Digest::SHA256.hexdigest(raw)
     end
   end
 end
