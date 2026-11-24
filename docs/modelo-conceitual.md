@@ -24,8 +24,8 @@ guarda só o hash. Ver [ADR 0006](adr/0006-autenticacao-do-host.md).
 ### Party
 Uma sessão da jukebox, criada por um host autenticado no Spotify.
 
-- **id**: identificador público e não sequencial (usado no link de convite)
-- **name**: nome atribuído pelo host
+- **id**: UUID, público e não sequencial (usado no link de convite, então não pode ser adivinhado)
+- **name**: nome atribuído pelo host (1 a 60 caracteres)
 - **host**: o `Host` que criou a party
 - **deviceId**: dispositivo Spotify onde a música toca
 - **status**: `active` | `ended`
@@ -64,6 +64,8 @@ Uma música adicionada à fila.
   da fila de pendentes.
 - **Party efêmera**: a party expira após um período sem atividade (padrão: 6h) e então é encerrada;
   um job remove os dados de parties encerradas. Ver [ADR 0002](adr/0002-postgresql-party-efemera.md).
+- **Uma party ativa por host**: para criar outra, o host precisa encerrar a atual (ou esperar ela
+  expirar). Garantida também por índice único parcial no banco.
 - **Controle do host**: apenas o host pode pular faixa, remover itens da fila e encerrar a party.
 - **Party encerrada é somente leitura**: não aceita novos participantes nem músicas.
 
