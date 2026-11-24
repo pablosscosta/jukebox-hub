@@ -1,5 +1,5 @@
 interface ImportMetaEnv {
-  // URL of the Rails API. Defaults to http://127.0.0.1:3000 in dev.
+  // URL of the Rails API. In dev it defaults to port 3000 on the page's own hostname.
   readonly VITE_API_URL?: string;
 }
 

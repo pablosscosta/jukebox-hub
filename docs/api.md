@@ -40,9 +40,17 @@ O login é feito por navegação no navegador (não por `fetch`):
   - `409 active_party_exists`: o host já tem uma party ativa; a resposta traz também `party` (a atual).
   - `422 device_unavailable`: o device não está mais aberto (ou não é do host).
   - `422 invalid_party`: nome vazio ou com mais de 60 caracteres.
-- `GET /parties/{id}`: dados públicos da party.
+- `GET /parties/{id}`: dados públicos da party (`PublicParty`), sem login. `404 party_not_found` se o
+  id não existe. Uma party expirada aparece como `ended`.
 - `POST /parties/{id}/end`: encerra a party. Só o host.
-- `POST /parties/{id}/participants`: entra na party (`displayName` opcional) e devolve o `participantToken`.
+- `POST /parties/{id}/participants`: o convidado entra, sem login. Body `{ "displayName": "Ana" }`
+  (opcional; sem nome vira "Convidado N"). Devolve `201` com
+  `{ "participantToken": "...", "participant": Participant }`. Erros: `404 party_not_found`,
+  `410 party_ended` (party encerrada ou expirada) e `422 invalid_participant` (nome com mais de 40
+  caracteres).
+- `GET /parties/{id}/participants/me`: o convidado dono do token (`Participant`). Serve para quem volta
+  à página conferir se o token salvo no aparelho ainda vale. `401` se o token não é dessa party, `410`
+  se a party acabou.
 
 ### Fila
 - `GET /parties/{id}/queue`: fila atual (item tocando + pendentes).
@@ -91,11 +99,23 @@ tocando agora.
 }
 ```
 
+### PublicParty
+O que qualquer pessoa com o link vê. Não inclui device nem link de convite.
+```json
+{
+  "id": "string",
+  "name": "string",
+  "status": "active",
+  "hostName": "string",
+  "expiresAt": "2026-01-05T23:00:00Z"
+}
+```
+
 ### Participant
 ```json
 {
   "id": "string",
-  "displayName": "string | null",
+  "displayName": "string",
   "joinedAt": "2026-01-05T17:00:00Z"
 }
 ```

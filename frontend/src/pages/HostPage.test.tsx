@@ -104,6 +104,17 @@ describe('HostPage', () => {
       expect(screen.queryByRole('button', { name: 'Criar party' })).not.toBeInTheDocument();
     });
 
+    it('shows a QR code that guests can scan', async () => {
+      mockApi({
+        'GET /me': { status: 200, body: host },
+        'GET /me/party': { status: 200, body: party },
+      });
+
+      renderAt('/host');
+
+      expect(await screen.findByRole('img', { name: 'QR code do convite' })).toBeInTheDocument();
+    });
+
     it('copies the invite link', async () => {
       mockApi({
         'GET /me': { status: 200, body: host },

@@ -10,7 +10,7 @@
 - [x] **Host via Spotify OAuth**
   - [x] Login com Authorization Code + PKCE, tokens criptografados e renovação automática
   - [x] Escolha de device e criação da party (só Premium, uma party ativa por host)
-- [ ] **Convite**: link único + QR code; participante entra sem login e recebe token anônimo
+- [x] **Convite**: link único + QR code; participante entra sem login e recebe token anônimo
 - [ ] **Fila**: FIFO, sem duplicatas simultâneas, máx. 2 músicas consecutivas por participante
 - [ ] **Playback**: avanço automático ao fim da faixa; pular e remover item só pelo host
 - [ ] **Tempo real e ciclo de vida**: eventos SSE, encerramento manual e expiração da party

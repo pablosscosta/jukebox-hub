@@ -4,7 +4,7 @@
     {
       "name": "backend",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd backend && PATH=$HOME/.local/share/mise/installs/ruby/4.0.10/bin:$PATH exec bin/dev"],
+      "runtimeArgs": ["-c", "cd backend && PATH=$HOME/.local/share/mise/installs/ruby/4.0.10/bin:$PATH exec bin/dev -b 0.0.0.0"],
       "port": 3000
     },
     {

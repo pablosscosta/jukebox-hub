@@ -1,5 +1,5 @@
 class PartiesController < ApplicationController
-  before_action :authenticate_host!
+  before_action :authenticate_host!, only: :create
 
   rescue_from Parties::Create::PremiumRequired do
     render_error("premium_required", "Para tocar músicas pela Jukebox Hub você precisa do Spotify Premium.",
@@ -21,6 +21,14 @@ class PartiesController < ApplicationController
   rescue_from ActiveRecord::RecordInvalid do
     render_error("invalid_party", "Dê um nome de até #{Party::NAME_MAX_LENGTH} caracteres para a party.",
                  status: :unprocessable_content)
+  end
+
+  # GET /parties/:id (public: what a guest sees before joining)
+  def show
+    party = Party.includes(:host).find_by(id: params[:id])
+    return render_party_not_found unless party
+
+    render json: public_party_json(party)
   end
 
   # POST /parties

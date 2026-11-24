@@ -12,5 +12,8 @@ Rails.application.routes.draw do
   get "me/devices", to: "me/devices#index"
   get "me/party", to: "me/party#show"
 
-  post "parties", to: "parties#create"
+  resources :parties, only: %i[create show] do
+    resources :participants, only: :create
+    get "participants/me", to: "participants#me"
+  end
 end

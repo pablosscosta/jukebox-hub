@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_24_190001) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_24_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -38,6 +38,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_190001) do
     t.index ["spotify_user_id"], name: "index_hosts_on_spotify_user_id", unique: true
   end
 
+  create_table "participants", force: :cascade do |t|
+    t.uuid "party_id", null: false
+    t.string "display_name", null: false
+    t.string "token_digest", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["party_id"], name: "index_participants_on_party_id"
+    t.index ["token_digest"], name: "index_participants_on_token_digest", unique: true
+    t.check_constraint "char_length(display_name::text) >= 1 AND char_length(display_name::text) <= 40", name: "participants_display_name_length_check"
+  end
+
   create_table "parties", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.bigint "host_id", null: false
     t.string "name", null: false
@@ -54,5 +65,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_190001) do
   end
 
   add_foreign_key "host_tokens", "hosts", on_delete: :cascade
+  add_foreign_key "participants", "parties", on_delete: :cascade
   add_foreign_key "parties", "hosts", on_delete: :cascade
 end

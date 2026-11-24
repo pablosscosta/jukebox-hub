@@ -1,9 +1,10 @@
+import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 import type { Party } from '../../api/client';
 
 const timeFormat = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-// The party that is running, with the invite link for the guests.
+// The party that is running, with the invite link and its QR code for the guests.
 export function PartyCard({ party }: { party: Party }) {
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
 
@@ -24,6 +25,18 @@ export function PartyCard({ party }: { party: Party }) {
         Tocando em {party.deviceName} · expira às {timeFormat.format(new Date(party.expiresAt))}
       </p>
 
+      {/* Always dark on white with a quiet zone (marginSize), so phone cameras read it in dark mode too. */}
+      <QRCodeSVG
+        value={party.shareUrl}
+        size={200}
+        marginSize={2}
+        bgColor="#ffffff"
+        fgColor="#000000"
+        title="QR code do convite"
+        role="img"
+        className="qr-code"
+      />
+
       <label>
         Link de convite
         <span className="copy-field">
@@ -42,7 +55,7 @@ export function PartyCard({ party }: { party: Party }) {
       {copyStatus === 'failed' && (
         <p role="alert">Não foi possível copiar. Selecione o link e copie manualmente.</p>
       )}
-      <p className="hint">QR code e encerrar party chegam nas próximas partes.</p>
+      <p className="hint">Encerrar a party chega numa próxima parte.</p>
     </section>
   );
 }

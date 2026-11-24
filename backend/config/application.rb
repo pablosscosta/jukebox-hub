@@ -46,5 +46,9 @@ module JukeboxHub
 
     # Where the React app lives. Used for CORS and to send the host back after logging in.
     config.x.frontend_origin = ENV.fetch("FRONTEND_ORIGIN", "http://127.0.0.1:5173")
+
+    # Base of the invite links. Same as the frontend in production; in dev it can point to the
+    # notebook's Wi-Fi IP so guests can open the link on their phones.
+    config.x.invite_origin = ENV["INVITE_ORIGIN"].presence || config.x.frontend_origin
   end
 end

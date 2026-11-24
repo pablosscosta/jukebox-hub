@@ -84,3 +84,9 @@ button.link {
   color: inherit;
   text-decoration: underline;
 }
+
+.qr-code {
+  display: block;
+  margin: 0 0 1rem;
+  border-radius: 0.5rem;
+}

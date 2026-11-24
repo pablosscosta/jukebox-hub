@@ -43,11 +43,26 @@ class ApplicationController < ActionController::API
     { id: host.id.to_s, displayName: host.display_name, premium: host.premium? }
   end
 
+  def render_party_not_found
+    render_error("party_not_found", "Não encontramos essa party. Confira o link.", status: :not_found)
+  end
+
+  # What anyone with the invite link can see: no device, no link, nothing about the host's account.
+  # An expired party that nobody closed yet already shows as ended.
+  def public_party_json(party)
+    { id: party.id, name: party.name, status: party.open? ? "active" : "ended",
+      hostName: party.host.display_name, expiresAt: party.expires_at }
+  end
+
+  def participant_json(participant)
+    { id: participant.id.to_s, displayName: participant.display_name, joinedAt: participant.created_at }
+  end
+
   # The invite link points to the frontend, where guests join the party.
   def party_json(party)
     {
       id: party.id, name: party.name, status: party.status, deviceName: party.device_name,
-      shareUrl: "#{Rails.configuration.x.frontend_origin}/p/#{party.id}",
+      shareUrl: "#{Rails.configuration.x.invite_origin}/p/#{party.id}",
       expiresAt: party.expires_at, createdAt: party.created_at
     }
   end

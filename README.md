@@ -23,11 +23,12 @@ uma festa escolhem a próxima faixa pelo celular, sem precisar de conta.
 Já funciona:
 - Host entra com o Spotify (OAuth + PKCE). Os tokens do Spotify ficam criptografados no banco e são
   renovados sozinhos.
+- Host com Spotify Premium cria uma party escolhendo o dispositivo onde a música toca (uma party ativa
+  por vez).
+- Convite por link e QR code; o convidado entra pelo celular, sem login, e recebe um token anônimo.
 - Lint, testes e checagens de segurança rodando no CI.
 
 Planejado para o MVP ([ROADMAP](docs/ROADMAP.md)):
-- Host cria uma party ligada a um dispositivo do Spotify.
-- Convite por link e QR code; convidado entra sem login.
 - Fila FIFO sem músicas duplicadas e com no máximo 2 músicas seguidas por convidado.
 - Avanço automático de faixa controlado pelo backend; só o host pula, remove ou encerra.
 - Fila e faixa atual atualizadas ao vivo via SSE.
@@ -84,10 +85,11 @@ Copie `backend/.env.example` para `backend/.env` e preencha. Em dev o arquivo é
 | `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | credenciais do app no Spotify |
 | `SPOTIFY_REDIRECT_URI` | `http://127.0.0.1:3000/auth/spotify/callback` em dev |
 | `FRONTEND_ORIGIN` | endereço do frontend (padrão `http://127.0.0.1:5173`) |
+| `INVITE_ORIGIN` | opcional; base do link de convite. Em dev, o IP do notebook no Wi-Fi para testar com o celular (padrão: `FRONTEND_ORIGIN`) |
 | `DATABASE_*` | opcional; por padrão conecta no Postgres local pelo socket Unix, com o seu usuário |
 
-No frontend, `VITE_API_URL` aponta para a API (padrão `http://127.0.0.1:3000`; veja
-`frontend/.env.example`).
+No frontend, `VITE_API_URL` aponta para a API em produção. Em dev ela não é necessária: a página usa a
+porta 3000 do mesmo endereço em que foi aberta (veja `frontend/.env.example`).
 
 ### Backend
 ```bash
@@ -105,6 +107,19 @@ npm run dev               # http://127.0.0.1:5173
 
 Abra http://127.0.0.1:5173 e clique em **Entrar com Spotify**.
 
+### Testar com o celular (convidado)
+O celular não abre `127.0.0.1` (esse endereço é sempre o próprio aparelho), então o convidado usa o IP
+do notebook na rede Wi-Fi:
+
+1. Descubra o IP do notebook: `ip -4 route get 1.1.1.1 | grep -oP 'src \K\S+'` (Linux) ou
+   `ipconfig getifaddr en0` (macOS).
+2. No `backend/.env`, defina `INVITE_ORIGIN=http://<ip>:5173`.
+3. Suba a API escutando na rede: `bin/dev -b 0.0.0.0`. O Vite já escuta na rede.
+4. Com o celular no mesmo Wi-Fi, escaneie o QR code da tela do host.
+
+O host continua usando `http://127.0.0.1:5173` no notebook, por causa do login do Spotify. Se o
+celular não abrir a página, confira se o firewall libera as portas 3000 e 5173.
+
 ## Testes
 ```bash
 # backend
@@ -121,8 +136,9 @@ npm run format:check      # Prettier
 ```
 
 Os testes cobrem o login completo com o Spotify simulado pelo WebMock: troca do código, `state`
-inválido, PKCE, código de uso único, renovação e revogação de tokens. No frontend, as telas de
-início, de retorno do login e do host. Cada funcionalidade do MVP entra com seus testes.
+inválido, PKCE, código de uso único, renovação e revogação de tokens; a criação da party (Premium,
+uma ativa por host, device disponível); e a entrada do convidado. No frontend, as telas de início,
+de retorno do login, do host e do convidado. Cada funcionalidade do MVP entra com seus testes.
 
 ## Decisões e aprendizados
 - **Postgres em vez de sessões em memória**: o Puma roda vários processos que não dividem memória.

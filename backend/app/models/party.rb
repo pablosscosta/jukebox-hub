@@ -5,6 +5,7 @@ class Party < ApplicationRecord
   NAME_MAX_LENGTH = 60
 
   belongs_to :host
+  has_many :participants, dependent: :delete_all
 
   enum :status, { active: "active", ended: "ended" }, validate: true
 
@@ -18,5 +19,10 @@ class Party < ApplicationRecord
 
   def expired?
     expires_at <= Time.current
+  end
+
+  # Accepts guests and songs. An expired party still marked active is already over for them.
+  def open?
+    active? && !expired?
   end
 end
