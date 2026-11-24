@@ -1,10 +1,12 @@
 Rails.application.routes.draw do
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
-
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
+  # Health check used by Render: 200 if the app boots.
   get "up" => "rails/health#show", as: :rails_health_check
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+  # Host login with Spotify. See docs/api.md.
+  get "auth/spotify", to: "auth/spotify#start", as: :spotify_login
+  get "auth/spotify/callback", to: "auth/spotify#callback", as: :spotify_callback
+  post "auth/token", to: "auth/tokens#create"
+  delete "auth/token", to: "auth/tokens#destroy"
+
+  get "me", to: "me#show"
 end

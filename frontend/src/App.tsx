@@ -1,9 +1,15 @@
+import { Route, Routes } from 'react-router';
+import { AuthCallbackPage } from './pages/AuthCallbackPage';
+import { HomePage } from './pages/HomePage';
+import { HostPage } from './pages/HostPage';
+
 function App() {
   return (
-    <main>
-      <h1>Jukebox Hub</h1>
-      <p>Crie uma festa e deixe seus convidados escolherem a próxima música.</p>
-    </main>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
+      <Route path="/host" element={<HostPage />} />
+    </Routes>
   );
 }
 

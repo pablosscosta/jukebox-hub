@@ -22,7 +22,8 @@ Segue as convenções do Rails, sem camadas extras:
 - `app/jobs`: tarefas em background com Solid Queue (avançar faixa, expirar parties).
 
 ## Fluxos principais
-1. **Criar party**: o host autentica via Spotify OAuth (Authorization Code + PKCE), escolhe um device e dá um nome à party.
+1. **Criar party**: o host entra com o Spotify (Authorization Code + PKCE, feito todo no backend) e recebe
+   um token da API. Depois escolhe um device e dá um nome à party.
 2. **Compartilhar**: a API devolve o link de convite; o QR code é gerado a partir dele.
 3. **Entrar e adicionar músicas**: o participante abre o link, recebe um token anônimo e adiciona faixas à fila.
 4. **Reprodução automática**: o backend manda o Spotify tocar a próxima faixa ao fim da atual, usando o token do host.
@@ -36,8 +37,11 @@ Segue as convenções do Rails, sem camadas extras:
 | Nomes | `Party` e `Participant` | [0003](adr/0003-nomes-party-participant.md) |
 | Tempo real | SSE + Postgres `LISTEN/NOTIFY` | [0004](adr/0004-sse-com-postgres-listen-notify.md) |
 | Testes | RSpec + FactoryBot | [0005](adr/0005-rspec-factorybot.md) |
+| Login do host | OAuth no backend + token Bearer | [0006](adr/0006-autenticacao-do-host.md) |
 
 ## Restrições conhecidas
+- O Spotify não aceita `localhost` em redirect URIs, só `127.0.0.1`. Por isso, em dev, frontend e API
+  rodam em `127.0.0.1`.
 - A Spotify Web API só permite controlar o playback de contas **Premium**. Apps em modo de
   desenvolvimento aceitam apenas usuários cadastrados no painel do Spotify.
 - Cada conexão SSE ocupa uma thread do Puma. O número de threads (`RAILS_MAX_THREADS`) e o
