@@ -9,7 +9,7 @@ RSpec.describe "GET /me" do
     get "/me", headers: { "Authorization" => "Bearer #{token}" }
 
     expect(response).to have_http_status(:ok)
-    expect(response.parsed_body).to eq("id" => host.id.to_s, "displayName" => "Pablo")
+    expect(response.parsed_body).to eq("id" => host.id.to_s, "displayName" => "Pablo", "premium" => true)
   end
 
   it "never exposes the Spotify tokens" do

@@ -26,6 +26,7 @@ module SpotifyAuth
       host = Host.find_or_initialize_by(spotify_user_id: profile.fetch("id"))
       host.update!(
         display_name: profile["display_name"].presence || profile.fetch("id"),
+        product: profile["product"],
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
         token_expires_at: tokens.expires_at

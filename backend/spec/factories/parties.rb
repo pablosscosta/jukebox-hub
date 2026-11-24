@@ -3,6 +3,7 @@ FactoryBot.define do
     host
     name { "Churrasco de sábado" }
     device_id { "device-1" }
+    device_name { "Notebook" }
 
     trait :ended do
       status { :ended }

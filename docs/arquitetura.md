@@ -42,7 +42,8 @@ Segue as convenções do Rails, sem camadas extras:
 ## Restrições conhecidas
 - O Spotify não aceita `localhost` em redirect URIs, só `127.0.0.1`. Por isso, em dev, frontend e API
   rodam em `127.0.0.1`.
-- A Spotify Web API só permite controlar o playback de contas **Premium**. Apps em modo de
+- A Spotify Web API só permite controlar o playback de contas **Premium**. A API guarda o plano do
+  host (campo `product` do perfil) a cada login e só deixa criar party se ele for Premium. Apps em modo de
   desenvolvimento aceitam apenas usuários cadastrados no painel do Spotify.
 - Cada conexão SSE ocupa uma thread do Puma. O número de threads (`RAILS_MAX_THREADS`) e o
   heartbeat/timeout das conexões precisam ser dimensionados.

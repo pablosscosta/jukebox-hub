@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_24_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_24_190001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -34,6 +34,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_180000) do
     t.datetime "token_expires_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "product"
     t.index ["spotify_user_id"], name: "index_hosts_on_spotify_user_id", unique: true
   end
 
@@ -45,10 +46,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_180000) do
     t.datetime "expires_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "device_name", null: false
     t.index ["host_id"], name: "index_parties_on_host_id"
     t.index ["host_id"], name: "index_parties_one_active_per_host", unique: true, where: "((status)::text = 'active'::text)"
     t.check_constraint "char_length(name::text) >= 1 AND char_length(name::text) <= 60", name: "parties_name_length_check"
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'ended'::character varying]::text[])", name: "parties_status_check"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'ended'::character varying::text])", name: "parties_status_check"
   end
 
   add_foreign_key "host_tokens", "hosts", on_delete: :cascade

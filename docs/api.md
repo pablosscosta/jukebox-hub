@@ -28,12 +28,18 @@ O login é feito por navegação no navegador (não por `fetch`):
   O código vale 1 minuto e só funciona uma vez; senão, `401` com `invalid_login_code`.
 - `DELETE /auth/token`: logout; o token deixa de funcionar. `204`.
 - `GET /me`: o host logado (`Host`).
+- `GET /me/party`: a party ativa do host (`Party`), ou `404` com `no_active_party`.
 - `GET /me/devices`: devices em que o Spotify do host está aberto agora (`Device[]`, pode vir vazia).
   Devices restritos, que não aceitam comandos pela API, ficam de fora. Se o Spotify falhar, `502` com
   `spotify_unavailable`; se o host revogou o acesso no Spotify, `401`.
 
 ### Parties
-- `POST /parties`: cria uma party (`name`, `deviceId`). Só o host.
+- `POST /parties`: cria uma party. Só o host. Body `{ "name": "...", "deviceId": "..." }`, com o
+  `deviceId` vindo de `GET /me/devices`. Devolve `201` com a `Party`. Erros:
+  - `403 premium_required`: o host não tem Spotify Premium.
+  - `409 active_party_exists`: o host já tem uma party ativa; a resposta traz também `party` (a atual).
+  - `422 device_unavailable`: o device não está mais aberto (ou não é do host).
+  - `422 invalid_party`: nome vazio ou com mais de 60 caracteres.
 - `GET /parties/{id}`: dados públicos da party.
 - `POST /parties/{id}/end`: encerra a party. Só o host.
 - `POST /parties/{id}/participants`: entra na party (`displayName` opcional) e devolve o `participantToken`.
@@ -55,7 +61,8 @@ O login é feito por navegação no navegador (não por `fetch`):
 ```json
 {
   "id": "string",
-  "displayName": "string"
+  "displayName": "string",
+  "premium": true
 }
 ```
 
@@ -77,6 +84,7 @@ tocando agora.
   "id": "string",
   "name": "string",
   "status": "active",
+  "deviceName": "pablo-note",
   "shareUrl": "https://.../p/{id}",
   "expiresAt": "2026-01-05T23:00:00Z",
   "createdAt": "2026-01-05T17:00:00Z"

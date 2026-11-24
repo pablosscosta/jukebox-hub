@@ -40,6 +40,15 @@ class ApplicationController < ActionController::API
   end
 
   def host_json(host)
-    { id: host.id.to_s, displayName: host.display_name }
+    { id: host.id.to_s, displayName: host.display_name, premium: host.premium? }
+  end
+
+  # The invite link points to the frontend, where guests join the party.
+  def party_json(party)
+    {
+      id: party.id, name: party.name, status: party.status, deviceName: party.device_name,
+      shareUrl: "#{Rails.configuration.x.frontend_origin}/p/#{party.id}",
+      expiresAt: party.expires_at, createdAt: party.created_at
+    }
   end
 end

@@ -11,7 +11,7 @@ class Party < ApplicationRecord
   attribute :expires_at, default: -> { LIFETIME.from_now }
 
   validates :name, presence: true, length: { maximum: NAME_MAX_LENGTH }
-  validates :device_id, :expires_at, presence: true
+  validates :device_id, :device_name, :expires_at, presence: true
   # Friendly error for the common case; the partial unique index in the database is what
   # really guarantees it when two requests arrive at the same time.
   validates :host_id, uniqueness: { conditions: -> { active }, message: :already_has_active_party }, if: :active?

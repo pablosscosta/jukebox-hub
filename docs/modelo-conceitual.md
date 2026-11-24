@@ -15,6 +15,7 @@ Quem entra com a conta do Spotify e cria parties. A música toca na conta dele.
 - **id**: identificador único
 - **spotifyUserId**: usuário Spotify (único: logar de novo atualiza o mesmo host)
 - **displayName**: nome exibido no Spotify
+- **product**: plano do Spotify (`premium`, `free`...), atualizado a cada login. Só Premium cria party.
 - **tokens do Spotify**: access e refresh token, guardados criptografados, mais a data de expiração do
   access token. Quando ele expira, a API renova sozinha com o refresh token.
 
@@ -27,7 +28,7 @@ Uma sessão da jukebox, criada por um host autenticado no Spotify.
 - **id**: UUID, público e não sequencial (usado no link de convite, então não pode ser adivinhado)
 - **name**: nome atribuído pelo host (1 a 60 caracteres)
 - **host**: o `Host` que criou a party
-- **deviceId**: dispositivo Spotify onde a música toca
+- **deviceId** e **deviceName**: dispositivo Spotify onde a música toca (o nome é guardado para exibição)
 - **status**: `active` | `ended`
 - **expiresAt**: momento em que a party expira automaticamente
 - **createdAt**: data/hora de criação

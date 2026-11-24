@@ -15,7 +15,8 @@ module SpotifyHelpers
     stub_request(:post, TOKEN_URL).to_return(status:, body: body.to_json, headers: json_headers)
   end
 
-  def stub_spotify_me(body = { "id" => "spotify-user-1", "display_name" => "Pablo" }, status: 200)
+  def stub_spotify_me(body = { "id" => "spotify-user-1", "display_name" => "Pablo", "product" => "premium" },
+                      status: 200)
     stub_request(:get, ME_URL).to_return(status:, body: body.to_json, headers: json_headers)
   end
 
