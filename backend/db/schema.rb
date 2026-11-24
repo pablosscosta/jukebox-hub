@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_24_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_24_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -41,12 +41,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_200000) do
   create_table "participants", force: :cascade do |t|
     t.uuid "party_id", null: false
     t.string "display_name", null: false
-    t.string "token_digest", null: false
+    t.string "token_digest"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "role", default: "guest", null: false
     t.index ["party_id"], name: "index_participants_on_party_id"
+    t.index ["party_id"], name: "index_participants_one_host_per_party", unique: true, where: "((role)::text = 'host'::text)"
     t.index ["token_digest"], name: "index_participants_on_token_digest", unique: true
     t.check_constraint "char_length(display_name::text) >= 1 AND char_length(display_name::text) <= 40", name: "participants_display_name_length_check"
+    t.check_constraint "role::text = 'host'::text OR token_digest IS NOT NULL", name: "participants_guest_token_check"
+    t.check_constraint "role::text = ANY (ARRAY['guest'::character varying, 'host'::character varying]::text[])", name: "participants_role_check"
   end
 
   create_table "parties", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

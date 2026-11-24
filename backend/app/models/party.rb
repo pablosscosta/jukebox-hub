@@ -17,6 +17,14 @@ class Party < ApplicationRecord
   # really guarantees it when two requests arrive at the same time.
   validates :host_id, uniqueness: { conditions: -> { active }, message: :already_has_active_party }, if: :active?
 
+  # The host's own participant row, created the first time they need it (e.g. to add a song).
+  # The unique index on (party, host role) settles two requests creating it at once.
+  def host_participant
+    participants.host.create_or_find_by!(role: :host) do |participant|
+      participant.display_name = host.display_name.to_s.truncate(Participant::NAME_MAX_LENGTH)
+    end
+  end
+
   def expired?
     expires_at <= Time.current
   end

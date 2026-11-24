@@ -18,6 +18,14 @@ RSpec.describe Participants::Join do
     expect(result.participant.display_name).to eq("Convidado 2")
   end
 
+  it "doesn't count the host when numbering guests" do
+    party.host_participant
+
+    result = described_class.call(party:, display_name: "")
+
+    expect(result.participant.display_name).to eq("Convidado 1")
+  end
+
   it "doesn't let anyone join an ended party" do
     party.ended!
 

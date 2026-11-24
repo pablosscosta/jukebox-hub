@@ -55,7 +55,8 @@ class ApplicationController < ActionController::API
   end
 
   def participant_json(participant)
-    { id: participant.id.to_s, displayName: participant.display_name, joinedAt: participant.created_at }
+    { id: participant.id.to_s, displayName: participant.display_name, role: participant.role,
+      joinedAt: participant.created_at }
   end
 
   # The invite link points to the frontend, where guests join the party.

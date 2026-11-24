@@ -26,7 +26,7 @@ module Participants
     # The name is optional. Without one the guest becomes "Convidado 1", "Convidado 2"... The
     # number is only a label: two guests joining at the same instant may get the same one.
     def name
-      @display_name.presence || "Convidado #{@party.participants.count + 1}"
+      @display_name.presence || "Convidado #{@party.participants.guest.count + 1}"
     end
   end
 end
