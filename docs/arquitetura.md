@@ -40,8 +40,9 @@ Segue as convenções do Rails, sem camadas extras:
 | Login do host | OAuth no backend + token Bearer | [0006](adr/0006-autenticacao-do-host.md) |
 
 ## Restrições conhecidas
-- O Spotify não aceita `localhost` em redirect URIs, só `127.0.0.1`. Por isso, em dev, frontend e API
-  rodam em `127.0.0.1`.
+- O Spotify não aceita `localhost` em redirect URIs, só `127.0.0.1`. Por isso, em dev, o host usa
+  frontend e API em `127.0.0.1`. Para testar o convite pelo celular, os dois também escutam no IP do
+  notebook no Wi-Fi, e o link de convite usa esse IP (`INVITE_ORIGIN`).
 - A Spotify Web API só permite controlar o playback de contas **Premium**. A API guarda o plano do
   host (campo `product` do perfil) a cada login e só deixa criar party se ele for Premium. Apps em modo de
   desenvolvimento aceitam apenas usuários cadastrados no painel do Spotify.
