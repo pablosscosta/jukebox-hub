@@ -9,19 +9,30 @@ Os nomes seguem o código: `Party` (antes "Sessão") e `Participant` (antes "Usu
 
 ## Entidades
 
+### Host
+Quem entra com a conta do Spotify e cria parties. A música toca na conta dele.
+
+- **id**: identificador único
+- **spotifyUserId**: usuário Spotify (único: logar de novo atualiza o mesmo host)
+- **displayName**: nome exibido no Spotify
+- **tokens do Spotify**: access e refresh token, guardados criptografados, mais a data de expiração do
+  access token. Quando ele expira, a API renova sozinha com o refresh token.
+
+O frontend se identifica com um token de acesso próprio da API (não o do Spotify). Do token, o banco
+guarda só o hash. Ver [ADR 0006](adr/0006-autenticacao-do-host.md).
+
 ### Party
 Uma sessão da jukebox, criada por um host autenticado no Spotify.
 
 - **id**: identificador público e não sequencial (usado no link de convite)
 - **name**: nome atribuído pelo host
-- **spotifyUserId**: usuário Spotify do host
+- **host**: o `Host` que criou a party
 - **deviceId**: dispositivo Spotify onde a música toca
 - **status**: `active` | `ended`
 - **expiresAt**: momento em que a party expira automaticamente
 - **createdAt**: data/hora de criação
 
 O link de compartilhamento e o QR code são **derivados** do `id` (não são armazenados).
-Os tokens OAuth do host ficam guardados criptografados e nunca são expostos pela API.
 
 ### Participant
 Um convidado que entrou na party pelo link ou QR code. Não tem login.
@@ -60,6 +71,9 @@ Uma música adicionada à fila.
 
 ## Relacionamentos
 ```text
+Host
+ └── Parties [*]
+
 Party
  ├── Participants [*]
  └── QueueItems [*] ──> addedBy: Participant

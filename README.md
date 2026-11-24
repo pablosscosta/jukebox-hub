@@ -21,11 +21,12 @@ uma festa escolhem a próxima faixa pelo celular, sem precisar de conta.
 
 ## Funcionalidades
 Já funciona:
-- Base da API Rails (health check em `GET /up`) e da SPA React.
+- Host entra com o Spotify (OAuth + PKCE). Os tokens do Spotify ficam criptografados no banco e são
+  renovados sozinhos.
 - Lint, testes e checagens de segurança rodando no CI.
 
 Planejado para o MVP ([ROADMAP](docs/ROADMAP.md)):
-- Host autentica com Spotify (OAuth + PKCE) e cria uma party ligada a um dispositivo.
+- Host cria uma party ligada a um dispositivo do Spotify.
 - Convite por link e QR code; convidado entra sem login.
 - Fila FIFO sem músicas duplicadas e com no máximo 2 músicas seguidas por convidado.
 - Avanço automático de faixa controlado pelo backend; só o host pula, remove ou encerra.
@@ -63,24 +64,46 @@ Postgres. Mais detalhes em [docs/arquitetura.md](docs/arquitetura.md),
 - Node.js 24 (`.nvmrc`)
 - PostgreSQL 16 rodando localmente
 
+> Use sempre `127.0.0.1` em vez de `localhost`: o Spotify não aceita `localhost` como endereço de
+> retorno do login.
+
+### App no Spotify
+1. Crie um app em [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard)
+   (marque **Web API**).
+2. Em **Redirect URIs**, adicione `http://127.0.0.1:3000/auth/spotify/callback`.
+3. Em **User Management**, adicione a sua conta do Spotify. Enquanto o app estiver em modo de
+   desenvolvimento, só as contas cadastradas ali conseguem logar.
+4. Copie o **Client ID** e o **Client Secret** para o `backend/.env` (próximo passo).
+
 ### Variáveis de ambiente
-Veja `backend/.env.example`. Por padrão, o backend conecta no Postgres local pelo socket Unix, com o
-seu usuário do sistema. Para conectar por TCP, exporte `DATABASE_HOST`, `DATABASE_USERNAME` e
-`DATABASE_PASSWORD`.
+Copie `backend/.env.example` para `backend/.env` e preencha. Em dev o arquivo é carregado pelo
+`dotenv-rails`.
+
+| Variável | Para quê |
+| --- | --- |
+| `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | credenciais do app no Spotify |
+| `SPOTIFY_REDIRECT_URI` | `http://127.0.0.1:3000/auth/spotify/callback` em dev |
+| `FRONTEND_ORIGIN` | endereço do frontend (padrão `http://127.0.0.1:5173`) |
+| `DATABASE_*` | opcional; por padrão conecta no Postgres local pelo socket Unix, com o seu usuário |
+
+No frontend, `VITE_API_URL` aponta para a API (padrão `http://127.0.0.1:3000`; veja
+`frontend/.env.example`).
 
 ### Backend
 ```bash
 cd backend
 bin/setup --skip-server   # instala as gems e cria o banco
-bin/dev                   # http://localhost:3000 (health check: /up)
+bin/dev                   # http://127.0.0.1:3000 (health check: /up)
 ```
 
 ### Frontend
 ```bash
 cd frontend
 npm install
-npm run dev               # http://localhost:5173
+npm run dev               # http://127.0.0.1:5173
 ```
+
+Abra http://127.0.0.1:5173 e clique em **Entrar com Spotify**.
 
 ## Testes
 ```bash
@@ -97,8 +120,9 @@ npm run lint              # ESLint (type-checked)
 npm run format:check      # Prettier
 ```
 
-Hoje os testes cobrem o boot da API (request spec de `/up`) e a renderização da página inicial.
-Cada funcionalidade do MVP entra com seus request specs e testes de componente.
+Os testes cobrem o login completo com o Spotify simulado pelo WebMock: troca do código, `state`
+inválido, PKCE, código de uso único, renovação e revogação de tokens. No frontend, as telas de
+início, de retorno do login e do host. Cada funcionalidade do MVP entra com seus testes.
 
 ## Decisões e aprendizados
 - **Postgres em vez de sessões em memória**: o Puma roda vários processos que não dividem memória.
@@ -107,6 +131,9 @@ Cada funcionalidade do MVP entra com seus request specs e testes de componente.
   gerador de autenticação. ([ADR 0003](docs/adr/0003-nomes-party-participant.md))
 - **SSE em vez de WebSocket**: a comunicação em tempo real é só do servidor para o cliente.
   ([ADR 0004](docs/adr/0004-sse-com-postgres-listen-notify.md))
+- **Login no backend + token Bearer**: o client secret e os tokens do Spotify nunca vão ao navegador, e
+  o frontend usa um token próprio da API, sem cookies entre domínios.
+  ([ADR 0006](docs/adr/0006-autenticacao-do-host.md))
 - **Monorepo**: API e tela que a consome mudam no mesmo PR. ([ADR 0001](docs/adr/0001-monorepo.md))
 - **TypeScript 6.0 fixo**: o `typescript-eslint` ainda não suporta o TS 7.
 

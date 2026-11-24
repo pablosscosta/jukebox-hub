@@ -6,15 +6,28 @@
 Convenções: JSON com chaves em `camelCase`, datas em ISO 8601 (UTC), erros no formato
 `{ "error": { "code": "string", "message": "string" } }`.
 
-Autenticação:
-- **Host**: sessão criada após o OAuth do Spotify.
+Autenticação (ver [ADR 0006](adr/0006-autenticacao-do-host.md)):
+- **Host**: header `Authorization: Bearer <token>`, recebido no fim do login com o Spotify.
 - **Participante**: header `Authorization: Bearer <participantToken>`, recebido ao entrar na party.
+
+Sem token válido, a resposta é `401` com `{ "error": { "code": "unauthorized", ... } }`.
 
 ## Endpoints
 
-### Autenticação do host
-- `GET /auth/spotify`: redireciona para o consentimento do Spotify.
-- `GET /auth/spotify/callback`: recebe o código, troca pelos tokens e cria a sessão do host.
+### Autenticação do host ✅
+O login é feito por navegação no navegador (não por `fetch`):
+
+1. O frontend leva o host para `GET /auth/spotify`, que redireciona para o consentimento do Spotify.
+2. O Spotify volta para `GET /auth/spotify/callback`. A API troca o código pelos tokens, salva o host e
+   redireciona para `{FRONTEND_ORIGIN}/auth/callback?code=<código de uso único>`. Em caso de erro, vai
+   `?error=` com um destes valores: `access_denied`, `invalid_state`, `login_failed` ou
+   `spotify_not_configured`.
+3. O frontend troca o código pelo token.
+
+- `POST /auth/token`: body `{ "code": "..." }`. Devolve `201` com `{ "token": "...", "host": Host }`.
+  O código vale 1 minuto e só funciona uma vez; senão, `401` com `invalid_login_code`.
+- `DELETE /auth/token`: logout; o token deixa de funcionar. `204`.
+- `GET /me`: o host logado (`Host`).
 - `GET /me/devices`: lista os devices Spotify do host.
 
 ### Parties
@@ -35,6 +48,14 @@ Autenticação:
 - `GET /parties/{id}/events`: stream SSE (`text/event-stream`).
 
 ## DTOs
+
+### Host
+```json
+{
+  "id": "string",
+  "displayName": "string"
+}
+```
 
 ### Party
 ```json
