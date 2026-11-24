@@ -27,6 +27,21 @@ export type Party = {
   createdAt: string;
 };
 
+// What a guest sees about a party before joining.
+export type PublicParty = {
+  id: string;
+  name: string;
+  status: 'active' | 'ended';
+  hostName: string;
+  expiresAt: string;
+};
+
+export type Participant = {
+  id: string;
+  displayName: string;
+  joinedAt: string;
+};
+
 type ErrorBody = { error?: { code?: string; message?: string } };
 
 export class ApiError extends Error {
@@ -99,4 +114,19 @@ export async function getCurrentParty(token: string) {
 
 export function createParty(token: string, params: { name: string; deviceId: string }) {
   return request<Party>('/parties', { method: 'POST', body: JSON.stringify(params) }, token);
+}
+
+export function getParty(partyId: string) {
+  return request<PublicParty>(`/parties/${encodeURIComponent(partyId)}`);
+}
+
+export function joinParty(partyId: string, displayName: string) {
+  return request<{ participantToken: string; participant: Participant }>(
+    `/parties/${encodeURIComponent(partyId)}/participants`,
+    { method: 'POST', body: JSON.stringify({ displayName }) },
+  );
+}
+
+export function getMyParticipant(partyId: string, token: string) {
+  return request<Participant>(`/parties/${encodeURIComponent(partyId)}/participants/me`, {}, token);
 }
