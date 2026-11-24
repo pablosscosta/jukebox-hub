@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 import { saveHostToken } from '../auth/hostToken';
-import { mockFetch, renderAt } from '../test/utils';
+import { mockApi, renderAt } from '../test/utils';
 
 describe('HomePage', () => {
   it('invites the visitor to log in with Spotify', () => {
@@ -15,7 +15,21 @@ describe('HomePage', () => {
 
   it('sends a logged-in host straight to their page', async () => {
     saveHostToken('host-token');
-    mockFetch({ status: 200, body: { id: '1', displayName: 'Pablo' } });
+    mockApi({
+      'GET /me': { status: 200, body: { id: '1', displayName: 'Pablo', premium: true } },
+      'GET /me/party': {
+        status: 200,
+        body: {
+          id: 'p1',
+          name: 'Churrasco',
+          status: 'active',
+          deviceName: 'note',
+          shareUrl: 'x',
+          expiresAt: '2026-11-24T23:00:00Z',
+          createdAt: '2026-11-24T17:00:00Z',
+        },
+      },
+    });
 
     renderAt('/');
 

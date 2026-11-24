@@ -1,13 +1,26 @@
 import { screen } from '@testing-library/react';
 import { getHostToken } from '../auth/hostToken';
-import { mockFetch, renderAt } from '../test/utils';
+import { mockApi, renderAt } from '../test/utils';
 
 describe('AuthCallbackPage', () => {
   it('trades the login code for a token and opens the host page', async () => {
-    const fetchMock = mockFetch(
-      { status: 201, body: { token: 'host-token', host: { id: '1', displayName: 'Pablo' } } },
-      { status: 200, body: { id: '1', displayName: 'Pablo' } },
-    );
+    const host = { id: '1', displayName: 'Pablo', premium: true };
+    const fetchMock = mockApi({
+      'POST /auth/token': { status: 201, body: { token: 'host-token', host } },
+      'GET /me': { status: 200, body: host },
+      'GET /me/party': {
+        status: 200,
+        body: {
+          id: 'p1',
+          name: 'Churrasco',
+          status: 'active',
+          deviceName: 'note',
+          shareUrl: 'x',
+          expiresAt: '2026-11-24T23:00:00Z',
+          createdAt: '2026-11-24T17:00:00Z',
+        },
+      },
+    });
 
     renderAt('/auth/callback?code=one-time-code');
 
@@ -33,7 +46,12 @@ describe('AuthCallbackPage', () => {
   });
 
   it('shows an error when the code is rejected', async () => {
-    mockFetch({ status: 401, body: { error: { code: 'invalid_login_code', message: 'x' } } });
+    mockApi({
+      'POST /auth/token': {
+        status: 401,
+        body: { error: { code: 'invalid_login_code', message: 'x' } },
+      },
+    });
 
     renderAt('/auth/callback?code=expired');
 

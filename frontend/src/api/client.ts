@@ -4,6 +4,24 @@ export const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:3000';
 export type Host = {
   id: string;
   displayName: string;
+  premium: boolean;
+};
+
+export type Device = {
+  id: string;
+  name: string;
+  type: string;
+  isActive: boolean;
+};
+
+export type Party = {
+  id: string;
+  name: string;
+  status: 'active' | 'ended';
+  deviceName: string;
+  shareUrl: string;
+  expiresAt: string;
+  createdAt: string;
 };
 
 type ErrorBody = { error?: { code?: string; message?: string } };
@@ -11,12 +29,15 @@ type ErrorBody = { error?: { code?: string; message?: string } };
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
+  // The whole response body, for errors that carry extra data (e.g. 409 with the current party).
+  readonly body: unknown;
 
-  constructor(status: number, code: string, message: string) {
+  constructor(status: number, code: string, message: string, body: unknown = {}) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.code = code;
+    this.body = body;
   }
 }
 
@@ -34,6 +55,7 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
       response.status,
       body.error?.code ?? 'unknown_error',
       body.error?.message ?? 'Algo deu errado. Tente de novo.',
+      body,
     );
   }
 
@@ -56,4 +78,22 @@ export function getMe(token: string) {
 
 export function logout(token: string) {
   return request<undefined>('/auth/token', { method: 'DELETE' }, token);
+}
+
+export function getDevices(token: string) {
+  return request<Device[]>('/me/devices', {}, token);
+}
+
+// The host's active party, or null when there is none.
+export async function getCurrentParty(token: string) {
+  try {
+    return await request<Party>('/me/party', {}, token);
+  } catch (err) {
+    if (err instanceof ApiError && err.code === 'no_active_party') return null;
+    throw err;
+  }
+}
+
+export function createParty(token: string, params: { name: string; deviceId: string }) {
+  return request<Party>('/parties', { method: 'POST', body: JSON.stringify(params) }, token);
 }
