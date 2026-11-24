@@ -12,6 +12,13 @@ module Spotify
       get("/me")
     end
 
+    # Devices where Spotify is open right now. A device only shows up while the app is open
+    # on it, so the list is often empty.
+    # Docs: https://developer.spotify.com/documentation/web-api/reference/get-a-users-available-devices
+    def devices
+      get("/me/player/devices").fetch("devices", []).map { |attrs| Device.from_api(attrs) }
+    end
+
     private
 
     def get(path)

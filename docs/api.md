@@ -28,7 +28,9 @@ O login é feito por navegação no navegador (não por `fetch`):
   O código vale 1 minuto e só funciona uma vez; senão, `401` com `invalid_login_code`.
 - `DELETE /auth/token`: logout; o token deixa de funcionar. `204`.
 - `GET /me`: o host logado (`Host`).
-- `GET /me/devices`: lista os devices Spotify do host.
+- `GET /me/devices`: devices em que o Spotify do host está aberto agora (`Device[]`, pode vir vazia).
+  Devices restritos, que não aceitam comandos pela API, ficam de fora. Se o Spotify falhar, `502` com
+  `spotify_unavailable`; se o host revogou o acesso no Spotify, `401`.
 
 ### Parties
 - `POST /parties`: cria uma party (`name`, `deviceId`). Só o host.
@@ -56,6 +58,18 @@ O login é feito por navegação no navegador (não por `fetch`):
   "displayName": "string"
 }
 ```
+
+### Device
+```json
+{
+  "id": "string",
+  "name": "Notebook",
+  "type": "Computer",
+  "isActive": true
+}
+```
+`type` vem do Spotify (`Computer`, `Smartphone`, `Speaker`...). `isActive` indica o device que está
+tocando agora.
 
 ### Party
 ```json

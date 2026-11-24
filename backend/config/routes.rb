@@ -9,4 +9,5 @@ Rails.application.routes.draw do
   delete "auth/token", to: "auth/tokens#destroy"
 
   get "me", to: "me#show"
+  get "me/devices", to: "me/devices#index"
 end
