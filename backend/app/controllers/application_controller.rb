@@ -47,7 +47,7 @@ class ApplicationController < ActionController::API
   def party_json(party)
     {
       id: party.id, name: party.name, status: party.status, deviceName: party.device_name,
-      shareUrl: "#{Rails.configuration.x.frontend_origin}/p/#{party.id}",
+      shareUrl: "#{Rails.configuration.x.invite_origin}/p/#{party.id}",
       expiresAt: party.expires_at, createdAt: party.created_at
     }
   end

@@ -1,5 +1,8 @@
-// Talks to the Rails API. In dev it runs on 127.0.0.1:3000; in production set VITE_API_URL.
-export const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:3000';
+// Talks to the Rails API. In production set VITE_API_URL. In dev the API is on port 3000 of the
+// same machine the page came from: the host opens 127.0.0.1 and a guest's phone opens the
+// notebook's Wi-Fi IP, and each one reaches the API at that same address.
+export const API_URL =
+  import.meta.env.VITE_API_URL ?? `${window.location.protocol}//${window.location.hostname}:3000`;
 
 export type Host = {
   id: string;

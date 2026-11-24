@@ -24,6 +24,14 @@ RSpec.describe "POST /parties" do
     end
   end
 
+  it "builds the invite link from INVITE_ORIGIN, so phones on the Wi-Fi can open it" do
+    allow(Rails.configuration.x).to receive(:invite_origin).and_return("http://10.0.0.5:5173")
+
+    create_party
+
+    expect(response.parsed_body["shareUrl"]).to eq("http://10.0.0.5:5173/p/#{Party.last.id}")
+  end
+
   it "answers 409 with the current party when the host already has one" do
     current = create(:party, host:)
 
