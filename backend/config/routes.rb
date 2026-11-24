@@ -9,4 +9,8 @@ Rails.application.routes.draw do
   delete "auth/token", to: "auth/tokens#destroy"
 
   get "me", to: "me#show"
+  get "me/devices", to: "me/devices#index"
+  get "me/party", to: "me/party#show"
+
+  post "parties", to: "parties#create"
 end

@@ -1,7 +1,22 @@
 class ApplicationController < ActionController::API
   include ActionController::HttpAuthentication::Token::ControllerMethods
 
+  rescue_from SpotifyAuth::ReauthenticationRequired do
+    render_error("unauthorized", "Sua conexão com o Spotify expirou. Faça login de novo.", status: :unauthorized)
+  end
+
+  rescue_from Spotify::Error do |error|
+    Rails.logger.warn("[spotify] #{error.class}: #{error.message}")
+    render_error("spotify_unavailable", "Não foi possível falar com o Spotify. Tente de novo.",
+                 status: :bad_gateway)
+  end
+
   private
+
+  # Spotify Web API client acting as the logged-in host, with a token that is still valid.
+  def spotify_api
+    Spotify::ApiClient.new(access_token: SpotifyAuth::FreshAccessToken.call(current_host))
+  end
 
   # Every error follows the same shape: { "error": { "code": "...", "message": "..." } }.
   def render_error(code, message, status:)
@@ -25,6 +40,15 @@ class ApplicationController < ActionController::API
   end
 
   def host_json(host)
-    { id: host.id.to_s, displayName: host.display_name }
+    { id: host.id.to_s, displayName: host.display_name, premium: host.premium? }
+  end
+
+  # The invite link points to the frontend, where guests join the party.
+  def party_json(party)
+    {
+      id: party.id, name: party.name, status: party.status, deviceName: party.device_name,
+      shareUrl: "#{Rails.configuration.x.frontend_origin}/p/#{party.id}",
+      expiresAt: party.expires_at, createdAt: party.created_at
+    }
   end
 end

@@ -20,6 +20,36 @@ RSpec.describe Host do
     end
   end
 
+  describe "#premium?" do
+    it "is true only for the Premium plan" do
+      expect(build(:host, product: "premium")).to be_premium
+      expect(build(:host, product: "free")).not_to be_premium
+      expect(build(:host, product: nil)).not_to be_premium
+    end
+  end
+
+  describe "#current_party" do
+    let(:host) { create(:host) }
+
+    it "returns the active party" do
+      party = create(:party, host:)
+
+      expect(host.current_party).to eq(party)
+    end
+
+    it "ignores ended parties" do
+      create(:party, :ended, host:)
+
+      expect(host.current_party).to be_nil
+    end
+
+    it "ignores an active party that already expired" do
+      create(:party, :expired, host:)
+
+      expect(host.current_party).to be_nil
+    end
+  end
+
   describe "#spotify_token_expired?" do
     it "is false while the token has time left" do
       expect(build(:host, token_expires_at: 10.minutes.from_now)).not_to be_spotify_token_expired

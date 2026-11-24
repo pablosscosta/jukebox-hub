@@ -35,6 +35,12 @@ Frontend (em `frontend/`):
 - Tempo real: SSE (`ActionController::Live`) + Postgres `LISTEN/NOTIFY` (ADR 0004).
 - Party é efêmera por regra de expiração, não por armazenamento em memória (ADR 0002).
 
+## Git
+- Mensagens de commit, títulos e descrições de PR em **português** (Conventional Commits:
+  `feat(backend): adiciona ...`). Isso vale acima da regra geral de commits em inglês.
+- Código, nomes de variáveis e branches continuam em inglês.
+- Sem linhas de coautoria do Claude em commits e PRs.
+
 ## Docs
 - `docs/arquitetura.md`, `docs/modelo-conceitual.md`, `docs/api.md`: fonte das regras e do contrato.
 - `docs/adr/`: decisões; criar um ADR novo para cada decisão relevante.

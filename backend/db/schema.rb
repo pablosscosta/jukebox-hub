@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_23_194756) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_24_190001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -23,7 +23,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_194756) do
     t.datetime "updated_at", null: false
     t.index ["host_id"], name: "index_host_tokens_on_host_id"
     t.index ["token_digest"], name: "index_host_tokens_on_token_digest", unique: true
-    t.check_constraint "kind::text = ANY (ARRAY['login_code'::character varying, 'access'::character varying]::text[])", name: "host_tokens_kind_check"
+    t.check_constraint "kind::text = ANY (ARRAY['login_code'::character varying::text, 'access'::character varying::text])", name: "host_tokens_kind_check"
   end
 
   create_table "hosts", force: :cascade do |t|
@@ -34,8 +34,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_194756) do
     t.datetime "token_expires_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "product"
     t.index ["spotify_user_id"], name: "index_hosts_on_spotify_user_id", unique: true
   end
 
+  create_table "parties", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "host_id", null: false
+    t.string "name", null: false
+    t.string "device_id", null: false
+    t.string "status", default: "active", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "device_name", null: false
+    t.index ["host_id"], name: "index_parties_on_host_id"
+    t.index ["host_id"], name: "index_parties_one_active_per_host", unique: true, where: "((status)::text = 'active'::text)"
+    t.check_constraint "char_length(name::text) >= 1 AND char_length(name::text) <= 60", name: "parties_name_length_check"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'ended'::character varying::text])", name: "parties_status_check"
+  end
+
   add_foreign_key "host_tokens", "hosts", on_delete: :cascade
+  add_foreign_key "parties", "hosts", on_delete: :cascade
 end

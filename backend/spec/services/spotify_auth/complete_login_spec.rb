@@ -24,6 +24,15 @@ RSpec.describe SpotifyAuth::CompleteLogin do
     expect(host.reload).to have_attributes(display_name: "Pablo", access_token: "new-access-token")
   end
 
+  it "saves the Spotify plan, refreshed on every login" do
+    create(:host, spotify_user_id: "spotify-user-1", product: "free")
+    stub_spotify_me({ "id" => "spotify-user-1", "display_name" => "Pablo", "product" => "premium" })
+
+    complete_login
+
+    expect(Host.last).to be_premium
+  end
+
   it "uses the Spotify id as name when the profile has no display name" do
     stub_spotify_me({ "id" => "spotify-user-1", "display_name" => nil })
 

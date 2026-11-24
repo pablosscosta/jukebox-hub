@@ -10,7 +10,8 @@ RSpec.describe "Host access token" do
       post "/auth/token", params: { code: }, as: :json
 
       expect(response).to have_http_status(:created)
-      expect(response.parsed_body).to include("host" => { "id" => host.id.to_s, "displayName" => "Pablo" })
+      expected_host = { "id" => host.id.to_s, "displayName" => "Pablo", "premium" => true }
+      expect(response.parsed_body).to include("host" => expected_host)
       expect(HostToken.find_active(response.parsed_body["token"], kind: :access).host).to eq(host)
     end
 
