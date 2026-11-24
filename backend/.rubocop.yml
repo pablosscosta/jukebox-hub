@@ -23,3 +23,11 @@ Style/Documentation:
 
 Style/FrozenStringLiteralComment:
   Enabled: false
+
+# Specs read better when one example checks a whole behaviour (e.g. status + body).
+RSpec/MultipleExpectations:
+  Max: 3
+
+RSpec/ExampleLength:
+  Max: 10
+  CountAsOne: ["array", "hash", "heredoc", "method_call"]

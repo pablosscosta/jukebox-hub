@@ -40,5 +40,11 @@ module JukeboxHub
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    # Cookies are used only to carry the OAuth state between /auth/spotify and its callback.
+    config.middleware.use ActionDispatch::Cookies
+
+    # Where the React app lives. Used for CORS and to send the host back after logging in.
+    config.x.frontend_origin = ENV.fetch("FRONTEND_ORIGIN", "http://127.0.0.1:5173")
   end
 end
