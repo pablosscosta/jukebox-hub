@@ -3,7 +3,7 @@ import { Navigate, useNavigate } from 'react-router';
 import { ApiError, getCurrentParty, getMe, logout, type Host, type Party } from '../api/client';
 import { clearHostToken, getHostToken } from '../auth/hostToken';
 import { CreatePartyForm } from './host/CreatePartyForm';
-import { PartyCard } from './host/PartyCard';
+import { HostParty } from './host/HostParty';
 
 // The host's area: shows the running party or lets the host start one.
 export function HostPage() {
@@ -53,6 +53,9 @@ export function HostPage() {
             party={party}
             token={token}
             onCreated={setParty}
+            onEnded={() => {
+              setParty(null);
+            }}
             onUnauthorized={goHome}
           />
         </>
@@ -71,11 +74,16 @@ type HostContentProps = {
   party: Party | null;
   token: string;
   onCreated: (party: Party) => void;
+  onEnded: () => void;
   onUnauthorized: () => void;
 };
 
-function HostContent({ host, party, token, onCreated, onUnauthorized }: HostContentProps) {
-  if (party) return <PartyCard party={party} />;
+function HostContent({ host, party, token, onCreated, onEnded, onUnauthorized }: HostContentProps) {
+  if (party) {
+    return (
+      <HostParty party={party} token={token} onEnded={onEnded} onUnauthorized={onUnauthorized} />
+    );
+  }
 
   if (!host.premium) {
     return <p role="alert">Para tocar músicas pela Jukebox Hub você precisa do Spotify Premium.</p>;

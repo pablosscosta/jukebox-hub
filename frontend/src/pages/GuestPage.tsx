@@ -9,6 +9,7 @@ import {
 } from '../api/client';
 import { clearParticipantToken, getParticipantToken } from '../auth/participantToken';
 import { JoinPartyForm } from './guest/JoinPartyForm';
+import { Jukebox } from './party/Jukebox';
 
 type View =
   | { kind: 'loading' }
@@ -16,7 +17,7 @@ type View =
   | { kind: 'failed' }
   | { kind: 'ended'; party?: PublicParty }
   | { kind: 'join'; party: PublicParty }
-  | { kind: 'joined'; party: PublicParty; participant: Participant };
+  | { kind: 'joined'; party: PublicParty; participant: Participant; token: string };
 
 // The page guests open from the invite link or QR code. No login: joining gives them a token.
 export function GuestPage() {
@@ -53,8 +54,8 @@ function renderView(view: View, partyId: string, setView: (view: View) => void) 
           <PartyHeader party={view.party} />
           <JoinPartyForm
             partyId={partyId}
-            onJoined={(participant) => {
-              setView({ kind: 'joined', party: view.party, participant });
+            onJoined={(participant, token) => {
+              setView({ kind: 'joined', party: view.party, participant, token });
             }}
             onEnded={() => {
               setView({ kind: 'ended', party: view.party });
@@ -67,7 +68,19 @@ function renderView(view: View, partyId: string, setView: (view: View) => void) 
         <>
           <PartyHeader party={view.party} />
           <p>Você entrou como {view.participant.displayName}.</p>
-          <p className="hint">A fila e a busca de músicas chegam na próxima etapa.</p>
+          <Jukebox
+            partyId={partyId}
+            token={view.token}
+            participantId={view.participant.id}
+            onUnauthorized={() => {
+              // The saved token stopped working: forget it and let the guest join again.
+              clearParticipantToken(partyId);
+              setView({ kind: 'join', party: view.party });
+            }}
+            onEnded={() => {
+              setView({ kind: 'ended', party: view.party });
+            }}
+          />
         </>
       );
   }
@@ -97,7 +110,7 @@ async function loadView(partyId: string): Promise<View> {
   if (!token) return { kind: 'join', party };
 
   try {
-    return { kind: 'joined', party, participant: await getMyParticipant(partyId, token) };
+    return { kind: 'joined', party, participant: await getMyParticipant(partyId, token), token };
   } catch (err) {
     if (err instanceof ApiError && err.status === 410) return { kind: 'ended', party };
     if (err instanceof ApiError && err.status === 401) {

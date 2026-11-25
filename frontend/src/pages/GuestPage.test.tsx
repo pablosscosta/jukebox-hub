@@ -12,21 +12,27 @@ const party = {
   hostName: 'Pablo',
   expiresAt: '2026-11-24T23:00:00Z',
 };
-const ana = { id: '1', displayName: 'Ana', joinedAt: '2026-11-24T18:00:00Z' };
+const ana = { id: '1', displayName: 'Ana', role: 'guest', joinedAt: '2026-11-24T18:00:00Z' };
+const emptyQueue = {
+  status: 200,
+  body: { nowPlaying: null, upNext: [], maxPendingPerParticipant: 5 },
+};
 const error = (status: number, code: string) => ({
   status,
   body: { error: { code, message: 'x' } },
 });
 
-function lastBody(fetchMock: ReturnType<typeof mockApi>) {
-  const [, init] = fetchMock.mock.lastCall as [string, RequestInit];
-  return JSON.parse(init.body as string) as unknown;
+// Body of the last POST: other requests (like loading the queue) may come after it.
+function lastPostBody(fetchMock: ReturnType<typeof mockApi>) {
+  const post = fetchMock.mock.calls.findLast(([, init]) => init?.method === 'POST');
+  return JSON.parse(post?.[1]?.body as string) as unknown;
 }
 
 describe('GuestPage', () => {
   it('shows the party and lets the guest join with a name', async () => {
     const fetchMock = mockApi({
       [`GET ${partyPath}`]: { status: 200, body: party },
+      [`GET ${partyPath}/queue`]: emptyQueue,
       [`POST ${partyPath}/participants`]: {
         status: 201,
         body: { participantToken: 'guest-token', participant: ana },
@@ -40,13 +46,14 @@ describe('GuestPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Entrar na party' }));
 
     expect(await screen.findByText('Você entrou como Ana.')).toBeInTheDocument();
-    expect(lastBody(fetchMock)).toEqual({ displayName: 'Ana' });
+    expect(lastPostBody(fetchMock)).toEqual({ displayName: 'Ana' });
     expect(getParticipantToken(partyId)).toBe('guest-token');
   });
 
   it('lets the guest join without a name', async () => {
     const fetchMock = mockApi({
       [`GET ${partyPath}`]: { status: 200, body: party },
+      [`GET ${partyPath}/queue`]: emptyQueue,
       [`POST ${partyPath}/participants`]: {
         status: 201,
         body: {
@@ -60,13 +67,14 @@ describe('GuestPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Entrar na party' }));
 
     expect(await screen.findByText('Você entrou como Convidado 3.')).toBeInTheDocument();
-    expect(lastBody(fetchMock)).toEqual({ displayName: '' });
+    expect(lastPostBody(fetchMock)).toEqual({ displayName: '' });
   });
 
   it('keeps a guest who already joined on this phone', async () => {
     saveParticipantToken(partyId, 'guest-token');
     const fetchMock = mockApi({
       [`GET ${partyPath}`]: { status: 200, body: party },
+      [`GET ${partyPath}/queue`]: emptyQueue,
       [`GET ${partyPath}/participants/me`]: { status: 200, body: ana },
     });
 
@@ -81,6 +89,7 @@ describe('GuestPage', () => {
     saveParticipantToken(partyId, 'old-token');
     mockApi({
       [`GET ${partyPath}`]: { status: 200, body: party },
+      [`GET ${partyPath}/queue`]: emptyQueue,
       [`GET ${partyPath}/participants/me`]: error(401, 'unauthorized'),
     });
 
@@ -102,6 +111,7 @@ describe('GuestPage', () => {
   it('says when the party ends while the guest is joining', async () => {
     mockApi({
       [`GET ${partyPath}`]: { status: 200, body: party },
+      [`GET ${partyPath}/queue`]: emptyQueue,
       [`POST ${partyPath}/participants`]: error(410, 'party_ended'),
     });
     renderAt(`/p/${partyId}`);

@@ -14,12 +14,25 @@ const party = {
   expiresAt: '2026-11-24T23:00:00Z',
   createdAt: '2026-11-24T17:00:00Z',
 };
+const hostParticipant = {
+  id: '9',
+  displayName: 'Pablo',
+  role: 'host',
+  joinedAt: '2026-11-24T17:00:00Z',
+};
+const emptyQueue = { nowPlaying: null, upNext: [], maxPendingPerParticipant: 5 };
+// Once a party shows up, the page loads the host's own participant and the queue.
+const partyRoutes = {
+  'GET /parties/party-1/participants/me': { status: 200, body: hostParticipant },
+  'GET /parties/party-1/queue': { status: 200, body: emptyQueue },
+};
 const notebook = { id: 'note', name: 'pablo-note', type: 'Computer', isActive: true };
 const phone = { id: 'phone', name: 'iPhone', type: 'Smartphone', isActive: false };
 
-function lastBody(fetchMock: ReturnType<typeof mockApi>) {
-  const [, init] = fetchMock.mock.lastCall as [string, RequestInit];
-  return JSON.parse(init.body as string) as unknown;
+// Body of the last POST: other requests (like loading the queue) may come after it.
+function lastPostBody(fetchMock: ReturnType<typeof mockApi>) {
+  const post = fetchMock.mock.calls.findLast(([, init]) => init?.method === 'POST');
+  return JSON.parse(post?.[1]?.body as string) as unknown;
 }
 
 describe('HostPage', () => {
@@ -30,6 +43,7 @@ describe('HostPage', () => {
   it('greets the host by name', async () => {
     const fetchMock = mockApi({
       'GET /me': { status: 200, body: host },
+      ...partyRoutes,
       'GET /me/party': noParty,
       'GET /me/devices': { status: 200, body: [] },
     });
@@ -64,6 +78,7 @@ describe('HostPage', () => {
   it('logs out', async () => {
     const fetchMock = mockApi({
       'GET /me': { status: 200, body: host },
+      ...partyRoutes,
       'GET /me/party': { status: 200, body: party },
       'DELETE /auth/token': { status: 204 },
     });
@@ -73,7 +88,7 @@ describe('HostPage', () => {
 
     expect(await screen.findByRole('link', { name: 'Entrar com Spotify' })).toBeInTheDocument();
     expect(getHostToken()).toBeNull();
-    expect(fetchMock).toHaveBeenLastCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       'http://127.0.0.1:3000/auth/token',
       expect.objectContaining({ method: 'DELETE' }),
     );
@@ -93,6 +108,8 @@ describe('HostPage', () => {
     it('shows the party with its invite link', async () => {
       mockApi({
         'GET /me': { status: 200, body: host },
+        ...partyRoutes,
+        ...partyRoutes,
         'GET /me/party': { status: 200, body: party },
       });
 
@@ -104,9 +121,26 @@ describe('HostPage', () => {
       expect(screen.queryByRole('button', { name: 'Criar party' })).not.toBeInTheDocument();
     });
 
+    it('lets the host search and queue songs like a guest', async () => {
+      const fetchMock = mockApi({
+        'GET /me': { status: 200, body: host },
+        'GET /me/party': { status: 200, body: party },
+        ...partyRoutes,
+      });
+
+      renderAt('/host');
+
+      expect(await screen.findByText('Suas músicas esperando: 0 de 5')).toBeInTheDocument();
+      expect(screen.getByLabelText('Buscar música ou artista')).toBeInTheDocument();
+      const [, init] = fetchMock.mock.lastCall as [string, RequestInit];
+      expect(new Headers(init.headers).get('Authorization')).toBe('Bearer host-token');
+    });
+
     it('shows a QR code that guests can scan', async () => {
       mockApi({
         'GET /me': { status: 200, body: host },
+        ...partyRoutes,
+        ...partyRoutes,
         'GET /me/party': { status: 200, body: party },
       });
 
@@ -118,6 +152,8 @@ describe('HostPage', () => {
     it('copies the invite link', async () => {
       mockApi({
         'GET /me': { status: 200, body: host },
+        ...partyRoutes,
+        ...partyRoutes,
         'GET /me/party': { status: 200, body: party },
       });
       const user = userEvent.setup();
@@ -134,6 +170,8 @@ describe('HostPage', () => {
     it('asks the host to open Spotify when no device is available', async () => {
       mockApi({
         'GET /me': { status: 200, body: host },
+        ...partyRoutes,
+        ...partyRoutes,
         'GET /me/party': noParty,
         'GET /me/devices': [
           { status: 200, body: [] },
@@ -151,6 +189,8 @@ describe('HostPage', () => {
     it('starts with the device that is playing and creates the party', async () => {
       const fetchMock = mockApi({
         'GET /me': { status: 200, body: host },
+        ...partyRoutes,
+        ...partyRoutes,
         'GET /me/party': noParty,
         'GET /me/devices': { status: 200, body: [phone, notebook] },
         'POST /parties': { status: 201, body: party },
@@ -162,12 +202,14 @@ describe('HostPage', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Criar party' }));
 
       expect(await screen.findByLabelText('Link de convite')).toHaveValue(party.shareUrl);
-      expect(lastBody(fetchMock)).toEqual({ name: 'Churrasco', deviceId: 'note' });
+      expect(lastPostBody(fetchMock)).toEqual({ name: 'Churrasco', deviceId: 'note' });
     });
 
     it('uses the device the host picks', async () => {
       const fetchMock = mockApi({
         'GET /me': { status: 200, body: host },
+        ...partyRoutes,
+        ...partyRoutes,
         'GET /me/party': noParty,
         'GET /me/devices': { status: 200, body: [phone, notebook] },
         'POST /parties': { status: 201, body: party },
@@ -179,12 +221,14 @@ describe('HostPage', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Criar party' }));
 
       await screen.findByLabelText('Link de convite');
-      expect(lastBody(fetchMock)).toEqual({ name: 'Churrasco', deviceId: 'phone' });
+      expect(lastPostBody(fetchMock)).toEqual({ name: 'Churrasco', deviceId: 'phone' });
     });
 
     it('shows the party that already exists when the API answers 409', async () => {
       mockApi({
         'GET /me': { status: 200, body: host },
+        ...partyRoutes,
+        ...partyRoutes,
         'GET /me/party': noParty,
         'GET /me/devices': { status: 200, body: [notebook] },
         'POST /parties': {
@@ -204,6 +248,8 @@ describe('HostPage', () => {
       const message = 'Esse device não está mais disponível. Abra o Spotify nele e tente de novo.';
       const fetchMock = mockApi({
         'GET /me': { status: 200, body: host },
+        ...partyRoutes,
+        ...partyRoutes,
         'GET /me/party': noParty,
         'GET /me/devices': { status: 200, body: [notebook] },
         'POST /parties': { status: 422, body: { error: { code: 'device_unavailable', message } } },

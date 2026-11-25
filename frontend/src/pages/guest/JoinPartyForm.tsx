@@ -6,7 +6,7 @@ const NAME_MAX_LENGTH = 40;
 
 type Props = {
   partyId: string;
-  onJoined: (participant: Participant) => void;
+  onJoined: (participant: Participant, token: string) => void;
   onEnded: () => void;
 };
 
@@ -22,7 +22,7 @@ export function JoinPartyForm({ partyId, onJoined, onEnded }: Props) {
     try {
       const { participantToken, participant } = await joinParty(partyId, name.trim());
       saveParticipantToken(partyId, participantToken);
-      onJoined(participant);
+      onJoined(participant, participantToken);
     } catch (err) {
       if (err instanceof ApiError && err.status === 410) {
         onEnded();
