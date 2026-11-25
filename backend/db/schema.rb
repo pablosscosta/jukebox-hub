@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_24_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_25_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -68,7 +68,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_24_210000) do
     t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'ended'::character varying::text])", name: "parties_status_check"
   end
 
+  create_table "queue_items", force: :cascade do |t|
+    t.uuid "party_id", null: false
+    t.bigint "participant_id", null: false
+    t.string "track_id", null: false
+    t.string "title", null: false
+    t.string "artist", null: false
+    t.integer "duration_ms", null: false
+    t.string "image_url"
+    t.string "status", default: "pending", null: false
+    t.datetime "started_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["participant_id"], name: "index_queue_items_on_participant_id"
+    t.index ["party_id", "track_id"], name: "index_queue_items_no_duplicate_tracks", unique: true, where: "((status)::text = ANY ((ARRAY['pending'::character varying, 'playing'::character varying])::text[]))"
+    t.index ["party_id"], name: "index_queue_items_on_party_id"
+    t.index ["party_id"], name: "index_queue_items_one_playing_per_party", unique: true, where: "((status)::text = 'playing'::text)"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'playing'::character varying, 'played'::character varying, 'removed'::character varying]::text[])", name: "queue_items_status_check"
+  end
+
   add_foreign_key "host_tokens", "hosts", on_delete: :cascade
   add_foreign_key "participants", "parties", on_delete: :cascade
   add_foreign_key "parties", "hosts", on_delete: :cascade
+  add_foreign_key "queue_items", "participants", on_delete: :cascade
+  add_foreign_key "queue_items", "parties", on_delete: :cascade
 end

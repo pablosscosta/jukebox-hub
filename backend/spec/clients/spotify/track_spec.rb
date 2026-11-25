@@ -5,8 +5,9 @@ RSpec.describe Spotify::Track do
     it "keeps what the jukebox needs" do
       track = described_class.from_api(spotify_track)
 
-      expect(track).to eq(described_class.new(id: "track-1", title: "Garota de Ipanema", artist: "Tom Jobim",
-                                              duration_ms: 323_000, image_url: "https://i.scdn.co/image/300"))
+      expect(track).to eq(described_class.new(id: SpotifyHelpers::TRACK_ID, title: "Garota de Ipanema",
+                                              artist: "Tom Jobim", duration_ms: 323_000,
+                                              image_url: "https://i.scdn.co/image/300"))
     end
 
     it "joins the names when there is more than one artist" do

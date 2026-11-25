@@ -17,7 +17,7 @@ RSpec.describe "GET /parties/:id/search" do
     search
 
     expect(response).to have_http_status(:ok)
-    expect(response.parsed_body).to eq([{ "trackId" => "track-1", "title" => "Garota de Ipanema",
+    expect(response.parsed_body).to eq([{ "trackId" => SpotifyHelpers::TRACK_ID, "title" => "Garota de Ipanema",
                                           "artist" => "Tom Jobim", "durationMs" => 323_000,
                                           "imageUrl" => "https://i.scdn.co/image/300" }])
     expect(a_request(:get, SpotifyHelpers::SEARCH_URL).with(query: hash_including("q" => "ipanema"),

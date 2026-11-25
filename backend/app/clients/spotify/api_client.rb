@@ -29,6 +29,17 @@ module Spotify
       items.compact.reject { |attrs| attrs["is_playable"] == false }.map { |attrs| Track.from_api(attrs) }
     end
 
+    # One track, or nil when it doesn't exist or can't be played in the host's country.
+    # Docs: https://developer.spotify.com/documentation/web-api/reference/get-track
+    def track(id)
+      attrs = get("/tracks/#{ERB::Util.url_encode(id)}", market: "from_token")
+      attrs["is_playable"] == false ? nil : Track.from_api(attrs)
+    rescue Error => e
+      raise unless [400, 404].include?(e.status)
+
+      nil
+    end
+
     private
 
     def get(path, params = {})

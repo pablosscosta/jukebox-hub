@@ -4,6 +4,13 @@ module PartyScoped
 
   included do
     before_action :set_party
+
+    # Spotify calls here use the host's account, but the caller is usually a guest: "log in again"
+    # would make no sense to them, the one who needs to reconnect is the host.
+    rescue_from SpotifyAuth::ReauthenticationRequired do
+      render_error("host_spotify_disconnected", "O Spotify do host desconectou. Peça para o host entrar de novo.",
+                   status: :service_unavailable)
+    end
   end
 
   private

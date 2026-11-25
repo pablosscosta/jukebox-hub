@@ -7,6 +7,7 @@ class Participant < ApplicationRecord
   NAME_MAX_LENGTH = 40
 
   belongs_to :party
+  has_many :queue_items, dependent: :delete_all
 
   enum :role, { guest: "guest", host: "host" }, validate: true
 
