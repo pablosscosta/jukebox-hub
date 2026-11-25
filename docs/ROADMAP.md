@@ -17,7 +17,7 @@
   tocada direto no app do Spotify "fura a fila" ([ADR 0008](adr/0008-avanco-da-fila.md))
 - [x] **Tempo real e ciclo de vida**: fila ao vivo por SSE, encerramento pelo host, expiração após 6 h
   sem atividade e limpeza dos dados ([ADR 0004](adr/0004-sse-com-postgres-listen-notify.md))
-- [ ] **Hospedagem**: escolher o servidor gratuito (os jobs não podem "dormir") e registrar em ADR
+- [ ] **Hospedagem**: Render gratuito com a API em Docker ([ADR 0009](adr/0009-hospedagem-render.md))
 - [x] **Acabamento visual**: tema escuro com verde, "Tocando agora" com capa e progresso, layout pensado
   para o celular e botões com alvo de toque de 44 px
 
@@ -30,4 +30,4 @@
 - [ ] Avaliar: botões "Tocar a seguir" e "Tocar agora" na busca, só para o host
 - [ ] Avaliar: transição sem silêncio entre músicas
 - [ ] Avaliar: Web Playback SDK (a aba da Jukebox Hub como player, sem o app do Spotify)
-- [ ] Deploy contínuo no Render
+- [ ] Servidor que não dorme, se o app crescer (VM da Oracle com Kamal ou plano pago)

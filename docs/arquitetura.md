@@ -44,6 +44,7 @@ Segue as convenções do Rails, sem camadas extras:
 | Login do host | OAuth no backend + token Bearer | [0006](adr/0006-autenticacao-do-host.md) |
 | Fila | Limite de 5 esperando e ordem justa calculada | [0007](adr/0007-fila-justa.md) |
 | Avanço da fila | Job agendado que confere o Spotify antes de agir | [0008](adr/0008-avanco-da-fila.md) |
+| Hospedagem | Render gratuito, API em Docker | [0009](adr/0009-hospedagem-render.md) |
 
 ## Restrições conhecidas
 - O Spotify não aceita `localhost` em redirect URIs, só `127.0.0.1`. Por isso, em dev, o host usa
@@ -57,8 +58,9 @@ Segue as convenções do Rails, sem camadas extras:
   ([ADR 0008](adr/0008-avanco-da-fila.md)).
 - Cada stream SSE aberto ocupa uma thread do Puma (mas não uma conexão do banco). O Puma roda com 32
   threads (`PUMA_MAX_THREADS`) e o pool do banco é separado (`DB_POOL`). Em desenvolvimento, editar o
-  código com streams abertos atrasa as requisições até o stream fechar (no máximo 30 s em dev).
+  código com streams abertos atrasa as requisições até o stream fechar (no máximo 10 s em dev).
 
 ## Deploy
-No Render ([`render.yaml`](../render.yaml)): web service para a API (com Solid Queue rodando dentro do
-Puma), Postgres gerenciado e static site para o frontend.
+No Render gratuito ([`render.yaml`](../render.yaml), [ADR 0009](adr/0009-hospedagem-render.md)): a API como
+web service em Docker (com Solid Queue rodando dentro do Puma, em modo `async`), Postgres gerenciado e
+site estático para o frontend. A API dorme após 15 min sem requisições.

@@ -126,6 +126,21 @@ do notebook na rede Wi-Fi:
 O host continua usando `http://127.0.0.1:5173` no notebook, por causa do login do Spotify. Se o
 celular não abrir a página, confira se o firewall libera as portas 3000 e 5173.
 
+## Deploy (Render)
+O [`render.yaml`](render.yaml) descreve tudo: a API (Docker), o banco e o site. No plano gratuito a API
+dorme sem acessos e o banco expira em 30 dias ([ADR 0009](docs/adr/0009-hospedagem-render.md)).
+
+1. No Render, crie um **Blueprint** a partir deste repositório. Ele cria `jukebox-hub-api`,
+   `jukebox-hub-web` e `jukebox-hub-db`.
+2. Preencha as variáveis marcadas como secretas:
+   - API: `FRONTEND_ORIGIN` (endereço do site), `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET` e
+     `SPOTIFY_REDIRECT_URI` (`<endereço da API>/auth/spotify/callback`).
+   - Site: `VITE_API_URL` (endereço da API).
+3. No painel do Spotify, cadastre a mesma redirect URI e as contas que vão criar parties (até 5).
+4. Quando o Render avisar que o banco gratuito vai expirar, crie um novo e atualize o `DATABASE_URL`.
+
+Para testar a imagem da API localmente: `docker build -t jukebox-hub-api backend`.
+
 ## Testes
 ```bash
 # backend
@@ -173,7 +188,7 @@ do MVP entra com seus testes.
 
 ## Próximos passos
 Fora do MVP: votação para pular faixa, busca com cache, histórico de parties, rate limiting por
-convidado e deploy contínuo.
+convidado e um servidor que não dorme (o Render já publica sozinho a cada merge no `main`).
 
 ## Autor
 **Pablo Costa**

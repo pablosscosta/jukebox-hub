@@ -40,9 +40,13 @@ plugin :tmp_restart
 
 # Runs the Solid Queue workers inside Puma, so a single process serves the API and the background jobs
 # (moving the queue to the next song). Always on in development; in production set SOLID_QUEUE_IN_PUMA.
-plugin :solid_queue if ENV["SOLID_QUEUE_IN_PUMA"] || ENV.fetch("RAILS_ENV", "development") == "development"
-
-# Run the Solid Queue supervisor inside of Puma for single-server deployments.
+if ENV["SOLID_QUEUE_IN_PUMA"] || ENV.fetch("RAILS_ENV", "development") == "development"
+  plugin :solid_queue
+  # By default Solid Queue forks a process for its worker, dispatcher and scheduler, each one a full
+  # copy of the app. On a small server (Render's free plan has 512 MB) set SOLID_QUEUE_MODE=async to
+  # run them as threads inside Puma instead.
+  solid_queue_mode ENV.fetch("SOLID_QUEUE_MODE", "fork").to_sym
+end
 
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
 # In other environments, only set the PID file if requested.

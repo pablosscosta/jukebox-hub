@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ApiError, createParty, getDevices, type Device, type Party } from '../../api/client';
+import { Loading } from '../../components/Loading';
 
 const NAME_MAX_LENGTH = 60;
 
@@ -73,7 +74,7 @@ export function CreatePartyForm({ token, onCreated, onUnauthorized }: Props) {
   }
 
   if (devices === null) {
-    return error ? <p role="alert">{error}</p> : <p className="hint">Procurando seus devices...</p>;
+    return error ? <p role="alert">{error}</p> : <Loading text="Procurando seus devices..." />;
   }
 
   if (devices.length === 0) {

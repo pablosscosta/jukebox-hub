@@ -1,30 +1,46 @@
 # Render Blueprint: https://render.com/docs/blueprint-spec
+# Free plan: the API sleeps after 15 min without requests and the free database expires after 30
+# days. Trade-offs and the way out are in docs/adr/0009-hospedagem-render.md.
 services:
   - type: web
     name: jukebox-hub-api
-    runtime: ruby
+    runtime: docker
+    plan: free
     rootDir: backend
-    buildCommand: bundle install && bin/rails db:prepare
-    startCommand: bundle exec puma -C config/puma.rb
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /up
     envVars:
       - key: DATABASE_URL
         fromDatabase:
           name: jukebox-hub-db
           property: connectionString
-      - key: RAILS_MASTER_KEY
-        sync: false
+      # Render creates it once and keeps it. The tokens saved in the database are encrypted with
+      # keys derived from it (ADR 0006): changing it logs every host out.
+      - key: SECRET_KEY_BASE
+        generateValue: true
+      # Background jobs (moving the queue) run inside Puma, as threads: the free plan has 512 MB.
+      - key: SOLID_QUEUE_IN_PUMA
+        value: "true"
+      - key: SOLID_QUEUE_MODE
+        value: async
+      - key: PUMA_MAX_THREADS
+        value: "16"
+      - key: DB_POOL
+        value: "10"
+      # The frontend's address (https://...onrender.com), also used for the invite link.
       - key: FRONTEND_ORIGIN
         sync: false
       - key: SPOTIFY_CLIENT_ID
         sync: false
       - key: SPOTIFY_CLIENT_SECRET
         sync: false
+      # https://<api address>/auth/spotify/callback, registered in the Spotify dashboard too.
       - key: SPOTIFY_REDIRECT_URI
         sync: false
-      - key: RAILS_MAX_THREADS
-        value: "5"
 
+  # Static sites don't sleep on the free plan: the page always opens fast, even when the API is
+  # still waking up.
   - type: web
     name: jukebox-hub-web
     runtime: static
@@ -32,6 +48,7 @@ services:
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
     envVars:
+      # The API's address (https://...onrender.com).
       - key: VITE_API_URL
         sync: false
     routes:

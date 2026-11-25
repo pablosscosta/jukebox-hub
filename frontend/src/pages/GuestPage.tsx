@@ -10,6 +10,7 @@ import {
 import { clearParticipantToken, getParticipantToken } from '../auth/participantToken';
 import { JoinPartyForm } from './guest/JoinPartyForm';
 import { Jukebox } from './party/Jukebox';
+import { Loading } from '../components/Loading';
 
 type View =
   | { kind: 'loading' }
@@ -36,7 +37,7 @@ export function GuestPage() {
 function renderView(view: View, partyId: string, setView: (view: View) => void) {
   switch (view.kind) {
     case 'loading':
-      return <p className="hint">Carregando a party...</p>;
+      return <Loading text="Carregando a party..." />;
     case 'notFound':
       return <p role="alert">Não encontramos essa party. Confira o link com quem te convidou.</p>;
     case 'failed':

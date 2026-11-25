@@ -1,0 +1,17 @@
+# Keep the image small and free of secrets: only what the app needs to run.
+/.git/
+/.github/
+/.bundle
+/.env*
+/config/master.key
+/config/credentials/*.key
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+/storage/*
+/coverage/
+/spec/
+/Dockerfile
+/.dockerignore
+/.rubocop.yml

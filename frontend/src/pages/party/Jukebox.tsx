@@ -13,6 +13,7 @@ import { NowPlaying } from './NowPlaying';
 import { TrackSearch } from './TrackSearch';
 import { UpNext } from './UpNext';
 import { usePartyEvents } from './usePartyEvents';
+import { Loading } from '../../components/Loading';
 
 type Props = {
   partyId: string;
@@ -128,7 +129,7 @@ export function Jukebox({
       {queue ? (
         <NowPlaying queue={queue} participantId={participantId} hostControls={hostControls} />
       ) : (
-        !error && <p className="hint">Carregando a fila...</p>
+        !error && <Loading text="Carregando a fila..." />
       )}
 
       <TrackSearch
