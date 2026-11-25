@@ -23,12 +23,13 @@ module QueueItems
       # Locking the party row makes adds to the same party happen one at a time. Without it, two
       # songs sent together could both pass the "5 pending" check. Spotify is called before the
       # lock, so the lock is never held while waiting on the network.
-      @party.with_lock do
+      item = @party.with_lock do
         check_limit!
         check_duplicate!
-        @party.queue_items.create!(participant: @participant, track_id: track.id, title: track.title,
-                                   artist: track.artist, duration_ms: track.duration_ms, image_url: track.image_url)
+        create_item(track)
       end
+      start_if_idle
+      item.reload
     rescue ActiveRecord::RecordNotUnique
       # The unique index caught a duplicate the check above didn't see.
       raise AlreadyQueued
@@ -42,6 +43,22 @@ module QueueItems
       raise InvalidTrack unless TRACK_ID_FORMAT.match?(@track_id)
 
       @spotify.track(@track_id) || raise(InvalidTrack)
+    end
+
+    def create_item(track)
+      @party.queue_items.create!(participant: @participant, track_id: track.id, title: track.title,
+                                 artist: track.artist, duration_ms: track.duration_ms, image_url: track.image_url)
+    end
+
+    # A song added to a stopped queue starts right away, also after Spotify stopped in the middle of
+    # a song. Not while the host's own song from Spotify plays: the queue resumes after it. If
+    # playing fails, the song is still in the queue, so adding it worked anyway.
+    def start_if_idle
+      return unless %w[idle paused].include?(@party.playback_state)
+
+      Playback::Advance.call(party: @party, spotify: @spotify, expected_current_id: nil)
+    rescue Spotify::Error => e
+      Rails.logger.warn("[playback] could not start party #{@party.id}: #{e.message}")
     end
 
     def check_limit!

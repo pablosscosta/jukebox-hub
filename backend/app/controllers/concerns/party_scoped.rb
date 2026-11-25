@@ -39,6 +39,13 @@ module PartyScoped
     render_error("unauthorized", "Entre na party de novo.", status: :unauthorized)
   end
 
+  # For actions only the host can do (skip, remove, start). Runs after authenticate_participant!.
+  def require_host!
+    return if current_participant.host?
+
+    render_error("forbidden", "Só o host pode fazer isso.", status: :forbidden)
+  end
+
   def participant_for(token)
     @party.participants.authenticate(token) || host_participant_for(token)
   end

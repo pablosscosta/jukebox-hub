@@ -40,14 +40,34 @@ module Spotify
       nil
     end
 
+    # Starts a track on the party's device, replacing whatever was playing there.
+    # Docs: https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback
+    def play(device_id:, track_id:)
+      request("PUT", "/me/player/play", { device_id: }, json: { uris: ["spotify:track:#{track_id}"] })
+    rescue Error => e
+      raise DeviceNotFoundError.new("Device #{device_id} not found", status: e.status) if e.status == 404
+
+      raise
+    end
+
+    # What is playing now, or nil when Spotify isn't playing anywhere (it answers 204).
+    # Docs: https://developer.spotify.com/documentation/web-api/reference/get-information-about-the-users-current-playback
+    def playback
+      body = request("GET", "/me/player")
+      body.present? ? Playback.from_api(body) : nil
+    end
+
     private
 
     def get(path, params = {})
+      request("GET", path, params)
+    end
+
+    def request(method, path, params = {}, json: nil)
       url = "#{BASE_URL}#{path}"
       url += "?#{URI.encode_www_form(params)}" if params.any?
-      status, body = Http.request("GET", url,
-                                  headers: { "Authorization" => "Bearer #{@access_token}" })
-      raise Error.new("GET #{path} failed (#{status})", status:) unless status == 200
+      status, body = Http.request(method, url, headers: { "Authorization" => "Bearer #{@access_token}" }, json:)
+      raise Error.new("#{method} #{path} failed (#{status})", status:) unless status.between?(200, 299)
 
       body
     end
