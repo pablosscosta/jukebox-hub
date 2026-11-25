@@ -46,6 +46,11 @@ if ENV["SOLID_QUEUE_IN_PUMA"] || ENV.fetch("RAILS_ENV", "development") == "devel
   # copy of the app. On a small server (Render's free plan has 512 MB) set SOLID_QUEUE_MODE=async to
   # run them as threads inside Puma instead.
   solid_queue_mode ENV.fetch("SOLID_QUEUE_MODE", "fork").to_sym
+
+  # In async mode Solid Queue starts inside Puma's main process, which in cluster mode (worker
+  # processes, e.g. when the host sets WEB_CONCURRENCY, as Render does) never loads the app: it would
+  # fail with "uninitialized constant SolidQueue". So async mode means a single Puma process.
+  workers 0 if ENV["SOLID_QUEUE_MODE"] == "async"
 end
 
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
