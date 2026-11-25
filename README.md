@@ -11,22 +11,35 @@ uma festa escolhem a próxima faixa pelo celular, sem precisar de conta.
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql)
 
-> **Status:** reescrita (v2) em andamento. A base do projeto está pronta e as funcionalidades do MVP
-> estão sendo implementadas uma a uma ([ROADMAP](docs/ROADMAP.md)). A versão anterior está na tag
-> `v0-legado`.
+> **Status:** MVP completo e no ar. Os próximos passos estão no [ROADMAP](docs/ROADMAP.md).
 
 ## Demonstração
 No ar em **[jukebox-hub-web.onrender.com](https://jukebox-hub-web.onrender.com)** (plano gratuito: o primeiro
-acesso pode levar até 1 minuto, enquanto a API acorda).
+acesso pode levar até 1 minuto).
 
 Criar parties exige Spotify Premium e, nesta versão de demonstração, uma conta liberada no app do
-Spotify (o modo de desenvolvimento do Spotify aceita até 5). Convidados entram pelo link, sem conta.
+Spotify (o modo de desenvolvimento do Spotify aceita até 5). Quem não está liberado vê como pedir
+acesso. Convidados entram pelo link, sem conta.
 
-> **TODO:** adicionar um GIF do fluxo (host cria a party → convidado adiciona uma música) em
-> `docs/assets/`.
+**Como uma party funciona:**
+1. O host entra com o Spotify, abre o Spotify num dispositivo (notebook, celular, caixa de som) e cria
+   a party escolhendo esse dispositivo.
+2. Os convidados escaneiam o QR code (ou abrem o link) e entram, só com um nome opcional.
+3. Todos buscam músicas e adicionam à fila; a primeira começa sozinha e as próximas entram quando a
+   atual acaba, na ordem justa.
+4. Mantenha a tela do host aberta durante a festa: ela mantém o servidor gratuito acordado.
+
+> **Quando a fila acaba, a música para** até alguém adicionar outra. A reprodução automática
+> (*Autoplay*) do Spotify não ajuda aqui: ela continua a partir de um álbum ou playlist, e a Jukebox Hub
+> toca músicas avulsas. Tocar uma playlist de fundo está nos próximos passos.
+
+<p align="center">
+  <img src="docs/assets/host.png" alt="Tela do host no computador: música tocando com capa e progresso, busca e próximas músicas" width="480">
+  &nbsp;
+  <img src="docs/assets/convidado.png" alt="Tela da convidada no celular: capa grande da música tocando e busca" width="230">
+</p>
 
 ## Funcionalidades
-Já funciona:
 - Host entra com o Spotify (OAuth + PKCE). Os tokens do Spotify ficam criptografados no banco e são
   renovados sozinhos.
 - Host com Spotify Premium cria uma party escolhendo o dispositivo onde a música toca (uma party ativa
@@ -40,9 +53,8 @@ Já funciona:
 - Interface escura pensada para o celular: a música tocando no topo, com capa e barra de progresso.
 - O host encerra a party (a música para e os convidados ficam sabendo na hora); sem atividade por 6 h,
   ela encerra sozinha, e os dados são apagados no dia seguinte.
-- Lint, testes e checagens de segurança rodando no CI.
-
-Planejado para o MVP ([ROADMAP](docs/ROADMAP.md)): escolher a hospedagem e publicar.
+- Publicado no Render gratuito, com a API em Docker; o site avisa quando o servidor está acordando.
+- Lint, testes e checagens de segurança rodando no CI; o Render publica a cada merge no `main`.
 
 ## Tecnologias
 | Tecnologia | Por quê |
@@ -54,21 +66,26 @@ Planejado para o MVP ([ROADMAP](docs/ROADMAP.md)): escolher a hospedagem e publi
 | Vite | Dev server e build rápidos, sem configuração extra |
 | RSpec + FactoryBot + WebMock | Request specs legíveis; Spotify sempre simulado nos testes |
 | Vitest + Testing Library | Testes de comportamento do usuário, integrados ao Vite |
-| GitHub Actions + Render | CI em todo PR; deploy de API, banco e site estático declarado em `render.yaml` |
+| GitHub Actions | CI em todo PR: lint, segurança (Brakeman, bundler-audit) e testes das duas aplicações |
+| Render + Docker | Hospedagem gratuita declarada em `render.yaml`; a API roda em Docker porque o Render não garante o Ruby 4.0 |
 
 ## Arquitetura
 ```mermaid
 flowchart LR
   Guest[Convidado / Host<br/>React SPA] -- HTTP JSON --> API[Rails API]
-  API -- SSE --> Guest
+  API -- SSE: aviso de mudança --> Guest
   API --> DB[(PostgreSQL)]
+  DB -- LISTEN/NOTIFY --> API
+  Jobs[Solid Queue<br/>dentro do Puma] --> DB
+  Jobs -- toca a próxima --> Spotify
   API -- token do host --> Spotify[Spotify Web API]
 ```
 
 Monorepo com duas aplicações independentes: `backend/` e `frontend/`. A API é a única que fala com o
-Spotify, usando o token do host, então os convidados nunca precisam de conta. Os eventos de fila e
-playback chegam aos navegadores por SSE e são distribuídos entre processos pelo `LISTEN/NOTIFY` do
-Postgres. Mais detalhes em [docs/arquitetura.md](docs/arquitetura.md),
+Spotify, usando o token do host, então os convidados nunca precisam de conta. Um job do Solid Queue
+acorda perto do fim de cada música, confere o Spotify e toca a próxima da ordem justa. Cada mudança
+gravada dispara um `NOTIFY` no Postgres, e as telas abertas recebem um aviso por SSE e recarregam a
+fila. Mais detalhes em [docs/arquitetura.md](docs/arquitetura.md),
 [docs/modelo-conceitual.md](docs/modelo-conceitual.md) e [docs/api.md](docs/api.md).
 
 ## Como rodar localmente
@@ -173,29 +190,35 @@ login, do host e do convidado, incluindo busca, fila ao vivo e controles do host
 do MVP entra com seus testes.
 
 ## Decisões e aprendizados
-- **Postgres em vez de sessões em memória**: o Puma roda vários processos que não dividem memória.
-  "Party efêmera" virou regra de expiração. ([ADR 0002](docs/adr/0002-postgresql-party-efemera.md))
-- **`Party` e `Participant`**: evitam conflito com a sessão HTTP do Rails e com o model `Session` do
-  gerador de autenticação. ([ADR 0003](docs/adr/0003-nomes-party-participant.md))
-- **SSE em vez de WebSocket, com aviso sem dados**: a comunicação em tempo real é só do servidor para
-  o cliente. O stream só diz "mudou" e a tela busca a fila pela API, então o token nunca vai na URL; um
-  único `LISTEN` por processo, com conexão própria, evita uma conexão do banco por celular. O stream
-  é um corpo de resposta que nunca toca no banco (sem `ActionController::Live`, que dividia a conexão
-  entre duas threads e travava o servidor). ([ADR 0004](docs/adr/0004-sse-com-postgres-listen-notify.md))
+- **Ordem da fila calculada, não salva**: até 5 músicas esperando por pessoa e ninguém toca 3 seguidas
+  se outra pessoa tem música na fila. Uma função pura decide a ordem a cada leitura, então não há
+  posições para manter em sincronia. ([ADR 0007](docs/adr/0007-fila-justa.md))
+- **Avanço por job que confere o Spotify**: o Spotify não avisa quando a música acaba nem quando o host
+  toca outra coisa pelo app. Um job acorda perto do fim e pergunta antes de agir (~2 chamadas por
+  música); cliques repetidos e jobs atrasados não pulam músicas a mais. ([ADR 0008](docs/adr/0008-avanco-da-fila.md))
+- **SSE com aviso sem dados**: o stream só diz "mudou" e a tela busca a fila pela API, então o token
+  nunca vai na URL. Um único `LISTEN` por processo, com conexão própria, evita uma conexão do banco por
+  celular. Aprendizado: o `ActionController::Live` dividia a conexão do banco entre duas threads e
+  travava o servidor; o stream virou um corpo de resposta que nunca toca no banco.
+  ([ADR 0004](docs/adr/0004-sse-com-postgres-listen-notify.md))
 - **Login no backend + token Bearer**: o client secret e os tokens do Spotify nunca vão ao navegador, e
   o frontend usa um token próprio da API, sem cookies entre domínios.
   ([ADR 0006](docs/adr/0006-autenticacao-do-host.md))
-- **Avanço por job que confere o Spotify**: o Spotify não avisa quando a música acaba, então um job
-  acorda perto do fim e pergunta antes de agir, com ~2 chamadas por música.
-  ([ADR 0008](docs/adr/0008-avanco-da-fila.md))
-- **Ordem da fila calculada, não salva**: uma função pura decide a ordem a cada leitura, então não
-  há posições para manter em sincronia. ([ADR 0007](docs/adr/0007-fila-justa.md))
-- **Monorepo**: API e tela que a consome mudam no mesmo PR. ([ADR 0001](docs/adr/0001-monorepo.md))
-- **TypeScript 6.0 fixo**: o `typescript-eslint` ainda não suporta o TS 7.
+- **Hospedagem gratuita com limites assumidos**: Render com a API em Docker e o Solid Queue em modo
+  `async` para caber em 512 MB; a API dorme sem acessos e o banco expira em 30 dias, o que combina com
+  a party efêmera. ([ADR 0009](docs/adr/0009-hospedagem-render.md), [ADR 0002](docs/adr/0002-postgresql-party-efemera.md))
+
+Outras decisões em [`docs/adr/`](docs/adr/): monorepo, nomes `Party`/`Participant`, RSpec + FactoryBot.
+O TypeScript fica fixo na 6.0 porque o `typescript-eslint` ainda não suporta o TS 7.
 
 ## Próximos passos
-Fora do MVP: votação para pular faixa, busca com cache, histórico de parties, rate limiting por
-convidado e um servidor que não dorme (o Render já publica sozinho a cada merge no `main`).
+Fora do MVP ([ROADMAP](docs/ROADMAP.md)):
+- **Playlist de fundo**: quando a fila acaba, tocar uma playlist escolhida pelo host até alguém
+  adicionar uma música.
+- Pedido de acesso de hosts, botões "Tocar a seguir/agora" para o host e transição sem silêncio entre
+  músicas.
+- Votação para pular faixa, histórico de parties e rate limiting por convidado.
+- Um servidor que não dorme, se o app crescer (a imagem Docker já serve para isso).
 
 ## Autor
 **Pablo Costa**
