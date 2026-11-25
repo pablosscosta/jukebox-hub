@@ -1,0 +1,9 @@
+#!/bin/bash -e
+# Runs pending migrations when the container starts the server, so each deploy updates the
+# database on its own. Other commands (e.g. a console) start without touching it.
+
+if [ "${@: -2:1}" == "puma" ] || [ "$1" == "bundle" -a "$3" == "puma" ]; then
+  ./bin/rails db:prepare
+fi
+
+exec "${@}"
