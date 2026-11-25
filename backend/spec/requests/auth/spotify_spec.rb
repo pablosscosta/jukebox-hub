@@ -81,6 +81,16 @@ RSpec.describe "Spotify login" do
       expect(response.location).to eq("#{frontend_callback}?error=access_denied")
     end
 
+    it "tells the frontend when the Spotify account isn't allowed in the app yet" do
+      stub_spotify_token
+      stub_spotify_me({ "error" => { "status" => 403, "message" => "User not registered" } }, status: 403)
+      spotify_query = start_login
+
+      get "/auth/spotify/callback", params: { code: "auth-code", state: spotify_query["state"] }
+
+      expect(response.location).to eq("#{frontend_callback}?error=not_allowed")
+    end
+
     it "lets the frontend know when Spotify fails" do
       stub_spotify_token({ "error" => "invalid_grant" }, status: 400)
       spotify_query = start_login

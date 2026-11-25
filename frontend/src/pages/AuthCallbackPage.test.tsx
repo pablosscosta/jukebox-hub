@@ -64,4 +64,11 @@ describe('AuthCallbackPage', () => {
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
   });
+
+  it('explains when the Spotify account is not allowed yet, and how to ask for access', async () => {
+    renderAt('/auth/callback?error=not_allowed');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('ainda não foi liberada');
+    expect(screen.getByText(/Para pedir acesso/)).toBeInTheDocument();
+  });
 });
