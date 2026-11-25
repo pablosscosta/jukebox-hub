@@ -6,8 +6,10 @@ Rails.application.configure do
   # Make code changes take effect immediately without server restart.
   config.enable_reloading = true
 
-  # Do not eager load code on boot.
-  config.eager_load = false
+  # Loads all code at boot (and again after each reload), like production. Live streams (SSE) stay
+  # open while code changes: if one of them had to autoload a class while a reload waits for it to
+  # finish, both would wait for each other forever and every new request would hang.
+  config.eager_load = true
 
   # Show full error reports.
   config.consider_all_requests_local = true

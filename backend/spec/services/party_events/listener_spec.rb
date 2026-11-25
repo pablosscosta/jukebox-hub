@@ -37,4 +37,10 @@ RSpec.describe PartyEvents::Listener do
   it "ignores a notice it can't read" do
     expect { listener.deliver("not json") }.not_to raise_error
   end
+
+  it "can be stopped, so a reload in development doesn't leave old listeners behind" do
+    listener.stop
+
+    expect(listener.instance_variable_get(:@stopped)).to be(true)
+  end
 end
