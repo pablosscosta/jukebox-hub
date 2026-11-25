@@ -23,6 +23,8 @@
   para o celular e botões com alvo de toque de 44 px
 
 ## Depois do MVP
+- [ ] Identidade visual: logo e favicon próprios (hoje o site usa o ícone padrão do Vite), usados também
+  no README e no link compartilhado (Open Graph). As cores e o tema escuro já estão definidos.
 - [ ] Votação para pular faixa
 - [ ] Busca de faixas com cache
 - [ ] Histórico de parties do host
