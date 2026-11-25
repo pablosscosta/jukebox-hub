@@ -31,7 +31,10 @@ Opções avaliadas em nov/2026:
   não garante o Ruby 4.0. A imagem aplica as migrations ao subir.
 - **Solid Queue em modo `async`** dentro do Puma: worker, dispatcher e agendador como threads, e não
   como processos separados, para caber nos 512 MB do plano gratuito. O modo padrão (`fork`) é o
-  recomendado pelo Solid Queue; aqui a memória é o motivo para trocar.
+  recomendado pelo Solid Queue; aqui a memória é o motivo para trocar. O modo `async` exige o Puma em
+  modo simples (um processo só): em modo cluster o Solid Queue tentaria iniciar no processo principal,
+  que não carrega a aplicação. O Render define `WEB_CONCURRENCY` sozinho, então o `puma.rb` força o
+  modo simples sempre que o Solid Queue está em `async`.
 - **`SECRET_KEY_BASE` gerado pelo Render**, então a `master.key` não sai da máquina de quem desenvolve.
 
 ## Consequências
