@@ -31,11 +31,12 @@ Já funciona:
 - A fila toca sozinha no Spotify do host: a próxima música entra quando a atual acaba, e o host pode
   pular, remover ou tocar uma música direto pelo app do Spotify (ela "fura a fila" e a fila volta depois).
 - Fila e música tocando atualizadas ao vivo em todos os celulares (SSE), sem recarregar a página.
+- Interface escura pensada para o celular: a música tocando no topo, com capa e barra de progresso.
 - O host encerra a party (a música para e os convidados ficam sabendo na hora); sem atividade por 6 h,
   ela encerra sozinha, e os dados são apagados no dia seguinte.
 - Lint, testes e checagens de segurança rodando no CI.
 
-Planejado para o MVP ([ROADMAP](docs/ROADMAP.md)): escolher a hospedagem e o acabamento visual.
+Planejado para o MVP ([ROADMAP](docs/ROADMAP.md)): escolher a hospedagem e publicar.
 
 ## Tecnologias
 | Tecnologia | Por quê |
@@ -156,8 +157,9 @@ do MVP entra com seus testes.
   gerador de autenticação. ([ADR 0003](docs/adr/0003-nomes-party-participant.md))
 - **SSE em vez de WebSocket, com aviso sem dados**: a comunicação em tempo real é só do servidor para
   o cliente. O stream só diz "mudou" e a tela busca a fila pela API, então o token nunca vai na URL; um
-  único `LISTEN` por processo evita uma conexão do banco por celular.
-  ([ADR 0004](docs/adr/0004-sse-com-postgres-listen-notify.md))
+  único `LISTEN` por processo, com conexão própria, evita uma conexão do banco por celular. O stream
+  é um corpo de resposta que nunca toca no banco (sem `ActionController::Live`, que dividia a conexão
+  entre duas threads e travava o servidor). ([ADR 0004](docs/adr/0004-sse-com-postgres-listen-notify.md))
 - **Login no backend + token Bearer**: o client secret e os tokens do Spotify nunca vão ao navegador, e
   o frontend usa um token próprio da API, sem cookies entre domínios.
   ([ADR 0006](docs/adr/0006-autenticacao-do-host.md))
