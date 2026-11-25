@@ -17,7 +17,7 @@ Segue as convenções do Rails, sem camadas extras:
 
 - `app/controllers`: controllers enxutos, que só recebem a requisição e formatam a resposta.
 - `app/models`: entidades (`Party`, `Participant`, `QueueItem`), validações e regras simples.
-- `app/services`: casos de uso com mais de um passo (ex.: `Queue::AddTrack`, `Playback::Advance`).
+- `app/services`: casos de uso com mais de um passo (ex.: `QueueItems::Add`, `Playback::Advance`).
 - `app/clients/spotify`: cliente HTTP da Spotify Web API, isolado para ser substituído nos testes.
 - `app/jobs`: tarefas em background com Solid Queue (avançar faixa, expirar parties).
 

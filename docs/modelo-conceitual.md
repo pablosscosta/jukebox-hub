@@ -40,18 +40,23 @@ Um convidado que entrou na party pelo link ou QR code. Não tem login.
 
 - **id**: identificador único
 - **displayName**: nome escolhido ao entrar (opcional; sem nome vira "Convidado N", até 40 caracteres)
+- **role**: `guest` (convidado) ou `host`
 - **joinedAt**: data/hora de entrada
 
 O participante recebe um token anônimo ao entrar e o usa para se identificar nas requisições. Como no
 host, o banco guarda só o hash do token. O token vale enquanto a party estiver ativa.
-O host também é um participante da própria party.
+
+O host também é um participante da própria party (`role: host`), para poder adicionar músicas. Esse
+participante é criado na primeira vez que o host precisa dele e não tem token próprio: o host usa o
+token de host. Cada party tem no máximo um participante host.
 
 ### QueueItem
 Uma música adicionada à fila.
 
 - **id**: identificador único
 - **trackId**: identificador da faixa no Spotify
-- **title / artist / durationMs**: metadados copiados do Spotify no momento da inclusão
+- **title / artist / durationMs / imageUrl**: metadados copiados do Spotify no momento da inclusão
+  (nunca enviados pelo cliente)
 - **addedBy**: participante que adicionou
 - **status**: `pending` | `playing` | `played` | `removed`
 - **addedAt / startedAt**: datas de inclusão e de início da reprodução
@@ -59,11 +64,12 @@ Uma música adicionada à fila.
 ---
 
 ## Regras de Negócio
-- **Fila FIFO**: os itens `pending` tocam na ordem de `addedAt`.
+- **Fila justa**: os itens `pending` tocam na ordem de chegada, mas ninguém toca 3 músicas seguidas
+  enquanto outra pessoa tem música esperando. A ordem é calculada a cada leitura, não armazenada. Ver
+  [ADR 0007](adr/0007-fila-justa.md).
+- **Até 5 músicas esperando por participante** (host incluído).
 - **Sem duplicatas simultâneas**: uma faixa não pode ser adicionada se já estiver `pending` ou `playing`
   na mesma party. Depois de tocada, pode voltar à fila. Garantida também por índice único parcial no banco.
-- **Limite de músicas consecutivas**: um participante não pode ter mais de **2** músicas seguidas no final
-  da fila de pendentes.
 - **Party efêmera**: a party expira após um período sem atividade (padrão: 6h) e então é encerrada;
   um job remove os dados de parties encerradas. Ver [ADR 0002](adr/0002-postgresql-party-efemera.md).
 - **Uma party ativa por host**: para criar outra, o host precisa encerrar a atual (ou esperar ela

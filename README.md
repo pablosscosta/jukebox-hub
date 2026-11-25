@@ -26,10 +26,11 @@ Já funciona:
 - Host com Spotify Premium cria uma party escolhendo o dispositivo onde a música toca (uma party ativa
   por vez).
 - Convite por link e QR code; o convidado entra pelo celular, sem login, e recebe um token anônimo.
+- Convidados e host buscam músicas no Spotify (com a conta do host) e montam a fila: até 5 músicas
+  esperando por pessoa, sem duplicatas, e ninguém toca 3 seguidas se outra pessoa tem música na fila.
 - Lint, testes e checagens de segurança rodando no CI.
 
 Planejado para o MVP ([ROADMAP](docs/ROADMAP.md)):
-- Fila FIFO sem músicas duplicadas e com no máximo 2 músicas seguidas por convidado.
 - Avanço automático de faixa controlado pelo backend; só o host pula, remove ou encerra.
 - Fila e faixa atual atualizadas ao vivo via SSE.
 
@@ -137,8 +138,9 @@ npm run format:check      # Prettier
 
 Os testes cobrem o login completo com o Spotify simulado pelo WebMock: troca do código, `state`
 inválido, PKCE, código de uso único, renovação e revogação de tokens; a criação da party (Premium,
-uma ativa por host, device disponível); e a entrada do convidado. No frontend, as telas de início,
-de retorno do login, do host e do convidado. Cada funcionalidade do MVP entra com seus testes.
+uma ativa por host, device disponível); a entrada do convidado; e a fila (busca, limite de 5, sem
+duplicatas, ordem justa testada por cenários). No frontend, as telas de início, de retorno do login, do
+host e do convidado, incluindo busca e fila. Cada funcionalidade do MVP entra com seus testes.
 
 ## Decisões e aprendizados
 - **Postgres em vez de sessões em memória**: o Puma roda vários processos que não dividem memória.
@@ -150,6 +152,8 @@ de retorno do login, do host e do convidado. Cada funcionalidade do MVP entra co
 - **Login no backend + token Bearer**: o client secret e os tokens do Spotify nunca vão ao navegador, e
   o frontend usa um token próprio da API, sem cookies entre domínios.
   ([ADR 0006](docs/adr/0006-autenticacao-do-host.md))
+- **Ordem da fila calculada, não salva**: uma função pura decide a ordem a cada leitura, então não
+  há posições para manter em sincronia. ([ADR 0007](docs/adr/0007-fila-justa.md))
 - **Monorepo**: API e tela que a consome mudam no mesmo PR. ([ADR 0001](docs/adr/0001-monorepo.md))
 - **TypeScript 6.0 fixo**: o `typescript-eslint` ainda não suporta o TS 7.
 
