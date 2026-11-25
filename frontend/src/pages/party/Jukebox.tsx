@@ -10,6 +10,7 @@ import {
 } from '../../api/client';
 import { QueueList, type HostControls } from './QueueList';
 import { TrackSearch } from './TrackSearch';
+import { usePartyEvents } from './usePartyEvents';
 
 type Props = {
   partyId: string;
@@ -22,8 +23,8 @@ type Props = {
   onEnded: () => void;
 };
 
-// Search and queue, the same for guests and the host. The queue doesn't update by itself yet
-// (that comes with real time): it reloads after each song added and with the "Atualizar" button.
+// Search and queue, the same for guests and the host. The queue follows the party live: it reloads
+// whenever the API says something changed (usePartyEvents).
 export function Jukebox({
   partyId,
   token,
@@ -36,9 +37,8 @@ export function Jukebox({
   const [error, setError] = useState<string | null>(null);
   // Kept apart from the loading error: reloading the queue after a failed action must not hide why it failed.
   const [actionError, setActionError] = useState<string | null>(null);
-  // Bumping it reloads the queue (after adding a song or with the "Atualizar" button).
+  // Bumping it reloads the queue (after a notice from the party, or after adding a song).
   const [reloadKey, setReloadKey] = useState(0);
-  const [refreshing, setRefreshing] = useState(false);
   const [hostBusy, setHostBusy] = useState(false);
 
   // Returns true when the error ends the visit and the page takes over.
@@ -53,25 +53,22 @@ export function Jukebox({
   // An effect event always sees the latest props, so the effect below doesn't run again just
   // because the page passed new callbacks.
   const onLoadFailed = useEffectEvent((err: unknown) => {
-    if (!handleFatalError(err)) setError('Não conseguimos carregar a fila. Tente atualizar.');
+    if (!handleFatalError(err))
+      setError('Não conseguimos carregar a fila. Tente recarregar a página.');
   });
 
   useEffect(() => {
     let current = true;
-    getQueue(partyId, token)
-      .then(
-        (loaded) => {
-          if (!current) return;
-          setQueue(loaded);
-          setError(null);
-        },
-        (err: unknown) => {
-          if (current) onLoadFailed(err);
-        },
-      )
-      .finally(() => {
-        if (current) setRefreshing(false);
-      });
+    getQueue(partyId, token).then(
+      (loaded) => {
+        if (!current) return;
+        setQueue(loaded);
+        setError(null);
+      },
+      (err: unknown) => {
+        if (current) onLoadFailed(err);
+      },
+    );
     // A newer load replaces this one: an older answer arriving late is ignored.
     return () => {
       current = false;
@@ -81,6 +78,8 @@ export function Jukebox({
   function reload() {
     setReloadKey((key) => key + 1);
   }
+
+  usePartyEvents(partyId, { onChange: reload, onEnded });
 
   async function runHostAction(action: () => Promise<unknown>) {
     setHostBusy(true);
@@ -131,19 +130,7 @@ export function Jukebox({
       />
 
       <section aria-labelledby="queue-title">
-        <div className="section-header">
-          <h2 id="queue-title">Fila</h2>
-          <button
-            type="button"
-            disabled={refreshing}
-            onClick={() => {
-              setRefreshing(true);
-              reload();
-            }}
-          >
-            {refreshing ? 'Atualizando...' : 'Atualizar'}
-          </button>
-        </div>
+        <h2 id="queue-title">Fila</h2>
         {error && <p role="alert">{error}</p>}
         {actionError && <p role="alert">{actionError}</p>}
         {queue ? (

@@ -1,6 +1,8 @@
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
+import { act } from 'react';
 import App from '../App';
+import { FakeEventSource } from './fakeEventSource';
 
 // Renders the whole app at a given URL, so tests exercise the real routes.
 export function renderAt(path: string) {
@@ -34,4 +36,17 @@ export function mockApi(routes: Record<string, MockResponse | MockResponse[]>) {
   });
   vi.stubGlobal('fetch', fetchMock);
   return fetchMock;
+}
+
+// Plays the API's part on the live streams the page opened: sends a notice like "queue_changed".
+export function emitPartyEvent(type: string) {
+  act(() => {
+    FakeEventSource.instances.forEach((source) => {
+      source.emit(type);
+    });
+  });
+}
+
+export function openStreams() {
+  return FakeEventSource.instances.filter((source) => !source.closed);
 }

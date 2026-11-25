@@ -259,6 +259,47 @@ describe('HostPage', () => {
       });
     });
 
+    describe('ending the party', () => {
+      it('ends the party after confirming and lets the host start another one', async () => {
+        const fetchMock = mockApi({
+          'GET /me': { status: 200, body: host },
+          'GET /me/party': { status: 200, body: party },
+          ...partyRoutes,
+          'POST /parties/party-1/end': { status: 204 },
+          'GET /me/devices': { status: 200, body: [notebook] },
+        });
+        renderAt('/host');
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Encerrar party' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Sim, encerrar' }));
+
+        expect(await screen.findByLabelText('Nome da party')).toBeInTheDocument();
+        expect(fetchMock).toHaveBeenCalledWith(
+          'http://127.0.0.1:3000/parties/party-1/end',
+          expect.objectContaining({ method: 'POST' }),
+        );
+      });
+
+      it('keeps the party when the host changes their mind', async () => {
+        const fetchMock = mockApi({
+          'GET /me': { status: 200, body: host },
+          'GET /me/party': { status: 200, body: party },
+          ...partyRoutes,
+        });
+        renderAt('/host');
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Encerrar party' }));
+        await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+        expect(screen.getByRole('button', { name: 'Encerrar party' })).toBeInTheDocument();
+        expect(screen.getByLabelText('Link de convite')).toBeInTheDocument();
+        expect(fetchMock).not.toHaveBeenCalledWith(
+          'http://127.0.0.1:3000/parties/party-1/end',
+          expect.anything(),
+        );
+      });
+    });
+
     it('shows a QR code that guests can scan', async () => {
       mockApi({
         'GET /me': { status: 200, body: host },
