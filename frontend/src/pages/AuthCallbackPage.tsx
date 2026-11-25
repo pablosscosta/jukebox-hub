@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { exchangeLoginCode } from '../api/client';
 import { saveHostToken } from '../auth/hostToken';
+import { Loading } from '../components/Loading';
 
 // Error codes sent by the backend in ?error=... after the Spotify login.
 const ERROR_MESSAGES: Record<string, string> = {
@@ -47,7 +48,7 @@ export function AuthCallbackPage() {
           <Link to="/">Voltar para o início</Link>
         </>
       ) : (
-        <p className="hint">Entrando...</p>
+        <Loading text="Entrando..." />
       )}
     </main>
   );

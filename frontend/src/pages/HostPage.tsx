@@ -4,6 +4,7 @@ import { ApiError, getCurrentParty, getMe, logout, type Host, type Party } from 
 import { clearHostToken, getHostToken } from '../auth/hostToken';
 import { CreatePartyForm } from './host/CreatePartyForm';
 import { HostParty } from './host/HostParty';
+import { Loading } from '../components/Loading';
 
 // The host's area: shows the running party or lets the host start one.
 export function HostPage() {
@@ -72,7 +73,7 @@ export function HostPage() {
           />
         </>
       ) : (
-        !error && <p className="hint">Carregando...</p>
+        !error && <Loading text="Carregando..." />
       )}
     </main>
   );
