@@ -73,7 +73,7 @@ export function CreatePartyForm({ token, onCreated, onUnauthorized }: Props) {
   }
 
   if (devices === null) {
-    return error ? <p role="alert">{error}</p> : <p>Procurando seus devices...</p>;
+    return error ? <p role="alert">{error}</p> : <p className="hint">Procurando seus devices...</p>;
   }
 
   if (devices.length === 0) {
@@ -128,12 +128,12 @@ export function CreatePartyForm({ token, onCreated, onUnauthorized }: Props) {
             <small>{DEVICE_TYPES[device.type] ?? device.type}</small>
           </label>
         ))}
-        <button type="button" className="link" onClick={reloadDevices}>
+        <button type="button" className="button-ghost button-small" onClick={reloadDevices}>
           Recarregar devices
         </button>
       </fieldset>
 
-      <button type="submit" className="button" disabled={submitting}>
+      <button type="submit" className="button-primary" disabled={submitting}>
         {submitting ? 'Criando...' : 'Criar party'}
       </button>
     </form>

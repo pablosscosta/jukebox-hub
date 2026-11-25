@@ -8,8 +8,10 @@ import {
   type Queue,
   type QueueItem,
 } from '../../api/client';
-import { QueueList, type HostControls } from './QueueList';
+import type { HostControls } from './hostControls';
+import { NowPlaying } from './NowPlaying';
 import { TrackSearch } from './TrackSearch';
+import { UpNext } from './UpNext';
 import { usePartyEvents } from './usePartyEvents';
 
 type Props = {
@@ -118,32 +120,34 @@ export function Jukebox({
   const myPending = queue?.upNext.filter((item) => item.addedBy.id === participantId).length ?? 0;
   const limitReached = queue !== null && myPending >= queue.maxPendingPerParticipant;
 
+  // Order on screen: what plays now, then the search (the main action), then what comes next.
   return (
     <>
+      {error && <p role="alert">{error}</p>}
+      {actionError && <p role="alert">{actionError}</p>}
+      {queue ? (
+        <NowPlaying queue={queue} participantId={participantId} hostControls={hostControls} />
+      ) : (
+        !error && <p className="hint">Carregando a fila...</p>
+      )}
+
       <TrackSearch
         partyId={partyId}
         token={token}
         queuedTrackIds={queuedTrackIds}
         limitReached={limitReached}
+        summary={
+          queue
+            ? `Suas músicas esperando: ${String(myPending)} de ${String(queue.maxPendingPerParticipant)}`
+            : undefined
+        }
         onAdded={reload}
         onFatalError={handleFatalError}
       />
 
-      <section aria-labelledby="queue-title">
-        <h2 id="queue-title">Fila</h2>
-        {error && <p role="alert">{error}</p>}
-        {actionError && <p role="alert">{actionError}</p>}
-        {queue ? (
-          <>
-            <p className="hint">
-              Suas músicas esperando: {myPending} de {queue.maxPendingPerParticipant}
-            </p>
-            <QueueList queue={queue} participantId={participantId} hostControls={hostControls} />
-          </>
-        ) : (
-          !error && <p>Carregando a fila...</p>
-        )}
-      </section>
+      {queue && (
+        <UpNext upNext={queue.upNext} participantId={participantId} hostControls={hostControls} />
+      )}
     </>
   );
 }

@@ -9,6 +9,8 @@ type Props = {
   token: string;
   queuedTrackIds: Set<string>;
   limitReached: boolean;
+  // A line under the title, e.g. how many of their songs the person has waiting.
+  summary?: string;
   onAdded: () => void;
   // Errors that end the visit (token no longer valid, party over) go up to the page.
   onFatalError: (err: unknown) => boolean;
@@ -20,6 +22,7 @@ export function TrackSearch({
   token,
   queuedTrackIds,
   limitReached,
+  summary,
   onAdded,
   onFatalError,
 }: Props) {
@@ -71,10 +74,13 @@ export function TrackSearch({
   }
 
   return (
-    <section aria-labelledby="search-title">
-      <h2 id="search-title">Adicionar música</h2>
+    <section className="section" aria-labelledby="search-title">
+      <div className="section-header">
+        <h3 id="search-title">Adicionar música</h3>
+        {summary && <span className="hint">{summary}</span>}
+      </div>
       <form
-        className="copy-field"
+        className="search-form"
         role="search"
         onSubmit={(event) => {
           event.preventDefault();
@@ -91,12 +97,17 @@ export function TrackSearch({
           maxLength={QUERY_MAX_LENGTH}
           required
         />
-        <button type="submit" disabled={searching || query.trim() === ''}>
+        <button
+          type="submit"
+          className="button-primary"
+          disabled={searching || query.trim() === ''}
+        >
           {searching ? 'Buscando...' : 'Buscar'}
         </button>
         {results && (
           <button
             type="button"
+            className="button-ghost"
             onClick={() => {
               clearSearch();
               setMessage(null);
@@ -112,7 +123,7 @@ export function TrackSearch({
         <p className="hint">Você chegou ao limite da fila. Espere uma das suas músicas tocar.</p>
       )}
 
-      {results?.length === 0 && <p>Nenhuma música encontrada.</p>}
+      {results?.length === 0 && <p className="hint">Nenhuma música encontrada.</p>}
       {results && results.length > 0 && (
         <ul className="tracks" aria-label="Resultados da busca">
           {results.map((track) => {
@@ -122,6 +133,7 @@ export function TrackSearch({
                 <TrackInfo track={track} />
                 <button
                   type="button"
+                  className="button-small"
                   aria-label={`Adicionar ${track.title}`}
                   disabled={queued || limitReached || addingId !== null}
                   onClick={() => void handleAdd(track)}

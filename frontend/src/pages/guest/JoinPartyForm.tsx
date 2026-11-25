@@ -53,7 +53,7 @@ export function JoinPartyForm({ partyId, onJoined, onEnded }: Props) {
           autoComplete="nickname"
         />
       </label>
-      <button type="submit" className="button" disabled={submitting}>
+      <button type="submit" className="button-primary" disabled={submitting}>
         {submitting ? 'Entrando...' : 'Entrar na party'}
       </button>
     </form>

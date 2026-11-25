@@ -279,4 +279,20 @@ describe('Jukebox', () => {
 
     expect(await screen.findByText('Nada tocando agora.')).toBeInTheDocument();
   });
+
+  it('shows how far the song that is playing has gone', async () => {
+    const startedAt = new Date(Date.now() - 60_000).toISOString();
+    openJoinedParty({
+      [`GET ${partyPath}/queue`]: queue([], {
+        nowPlaying: { ...queueItem({ ...ipanema, durationMs: 200_000 }, '10'), startedAt },
+        playbackState: 'playing',
+      }),
+    });
+
+    const progress = await screen.findByRole('progressbar', { name: 'Progresso da música' });
+
+    expect(progress).toHaveAttribute('aria-valuenow', '30');
+    expect(screen.getByText('1:00')).toBeInTheDocument();
+    expect(screen.getByText('3:20')).toBeInTheDocument();
+  });
 });

@@ -36,7 +36,7 @@ export function GuestPage() {
 function renderView(view: View, partyId: string, setView: (view: View) => void) {
   switch (view.kind) {
     case 'loading':
-      return <p>Carregando a party...</p>;
+      return <p className="hint">Carregando a party...</p>;
     case 'notFound':
       return <p role="alert">Não encontramos essa party. Confira o link com quem te convidou.</p>;
     case 'failed':
@@ -67,7 +67,7 @@ function renderView(view: View, partyId: string, setView: (view: View) => void) 
       return (
         <>
           <PartyHeader party={view.party} />
-          <p>Você entrou como {view.participant.displayName}.</p>
+          <p className="hint">Você entrou como {view.participant.displayName}.</p>
           <Jukebox
             partyId={partyId}
             token={view.token}
@@ -88,10 +88,12 @@ function renderView(view: View, partyId: string, setView: (view: View) => void) 
 
 function PartyHeader({ party }: { party: PublicParty }) {
   return (
-    <>
-      <h1>{party.name}</h1>
-      <p>Party de {party.hostName}</p>
-    </>
+    <header className="party-header">
+      <div>
+        <h1>{party.name}</h1>
+        <p>Party de {party.hostName}</p>
+      </div>
+    </header>
   );
 }
 

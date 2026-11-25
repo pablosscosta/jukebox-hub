@@ -1,105 +1,377 @@
+/* Jukebox Hub: dark theme only, green accent. Colors, spacing and corners are set once here as
+   custom properties; components only use the variables. */
 :root {
-  font-family: system-ui, sans-serif;
+  color-scheme: dark;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
   line-height: 1.5;
-  color-scheme: light dark;
+  -webkit-font-smoothing: antialiased;
+
+  --bg: #121212;
+  --surface: #1c1c1c;
+  --surface-raised: #262626;
+  --border: #2e2e2e;
+  --border-strong: #454545;
+  --text: #f2f2f2;
+  --text-secondary: #a7a7a7;
+  --accent: #1db954;
+  --accent-hover: #1ed760;
+  --on-accent: #0b0b0b;
+  --danger: #f3727f;
+  --danger-bg: #3a1a1e;
+
+  --radius: 8px;
+  --radius-lg: 14px;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  /* Smallest comfortable touch target on a phone. */
+  --touch: 44px;
+
+  color: var(--text);
+  background: var(--bg);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  background: var(--bg);
 }
 
 main {
   max-width: 40rem;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: var(--space-6) var(--space-4) var(--space-8);
 }
 
+h1,
+h2,
+h3 {
+  margin: 0 0 var(--space-2);
+  line-height: 1.25;
+}
+
+h1 {
+  font-size: 1.5rem;
+}
+
+h2 {
+  font-size: 1.15rem;
+}
+
+h3 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+p {
+  margin: 0 0 var(--space-3);
+}
+
+a {
+  color: var(--accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Buttons: one primary per screen, then regular, ghost and danger ---------- */
+
+button,
 .button {
-  display: inline-block;
-  padding: 0.6rem 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--touch);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
-  background: #1db954;
-  color: #000;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
   font-weight: 600;
   text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
 }
+
+button:hover:not(:disabled),
+.button:hover {
+  border-color: var(--text-secondary);
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.button-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.button-primary:hover:not(:disabled),
+a.button-primary:hover {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
+.button-ghost {
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+
+.button-ghost:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.button-danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.button-danger:hover:not(:disabled) {
+  background: var(--danger-bg);
+}
+
+.button-small {
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  font-size: 0.875rem;
+}
+
+/* ---------- Form fields ---------- */
 
 label {
   display: block;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
 }
 
 input:not([type='radio']) {
   display: block;
   width: 100%;
-  box-sizing: border-box;
-  margin-top: 0.25rem;
-  padding: 0.5rem;
+  min-height: var(--touch);
+  margin-top: var(--space-1);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
   font: inherit;
+}
+
+input::placeholder {
+  color: var(--text-secondary);
+}
+
+input[type='radio'] {
+  accent-color: var(--accent);
+  width: 1.1rem;
+  height: 1.1rem;
 }
 
 fieldset {
-  margin: 0 0 1.5rem;
-  padding: 1rem;
-  border: 1px solid #8884;
-  border-radius: 0.5rem;
+  margin: 0 0 var(--space-6);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }
 
-.device {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+legend {
+  padding: 0 var(--space-2);
+  color: var(--text-secondary);
 }
 
-.device small,
+/* ---------- Layout pieces ---------- */
+
 .hint {
-  color: #888;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
 }
 
-.copy-field {
-  display: flex;
-  gap: 0.5rem;
+[role='alert'] {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  background: var(--danger-bg);
+  color: var(--danger);
 }
 
-.copy-field input {
-  flex: 1;
-  min-width: 0;
-}
-
-button {
-  font: inherit;
-  cursor: pointer;
-}
-
-button.button {
-  border: none;
-}
-
-button.link {
-  margin-top: 1rem;
-  padding: 0;
-  border: none;
-  background: none;
-  color: inherit;
-  text-decoration: underline;
-}
-
-.qr-code {
-  display: block;
-  margin: 0 0 1rem;
-  border-radius: 0.5rem;
+.section {
+  margin-bottom: var(--space-8);
 }
 
 .section-header {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 1rem;
+  column-gap: var(--space-4);
 }
 
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.page-header p {
+  margin: 0;
+}
+
+.party-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.party-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.page-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.card {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.hero {
+  padding: 18vh 0 var(--space-8);
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 2.25rem;
+}
+
+.hero p {
+  color: var(--text-secondary);
+}
+
+/* ---------- Now playing ---------- */
+
+.now-playing {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.now-playing img,
+.now-playing .cover-placeholder {
+  flex-shrink: 0;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  object-fit: cover;
+}
+
+.now-playing-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.now-playing-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.now-playing-info p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.now-playing-actions {
+  margin-top: var(--space-3);
+}
+
+/* Phones: the cover goes on top, big, like a music app. */
+@media (max-width: 30rem) {
+  .now-playing {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .now-playing img,
+  .now-playing .cover-placeholder {
+    width: 100%;
+    max-width: 18rem;
+    height: auto;
+    aspect-ratio: 1;
+    margin: 0 auto;
+  }
+}
+
+.progress {
+  margin-top: var(--space-3);
+}
+
+.progress-track {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--border-strong);
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 1s linear;
+}
+
+.progress-times {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Track lists (search results and up next) ---------- */
+
 .tracks {
-  margin: 0 0 1.5rem;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -108,15 +380,19 @@ button.link {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #8883;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.tracks li:last-child {
+  border-bottom: none;
 }
 
 .track-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
   min-width: 0;
 }
 
@@ -125,34 +401,111 @@ button.link {
   flex-shrink: 0;
   width: 48px;
   height: 48px;
-  border-radius: 0.25rem;
-  background: #8884;
+  border-radius: 6px;
+  background: var(--surface-raised);
+}
+
+.track-info > span {
+  min-width: 0;
+}
+
+.track-info strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .track-info small {
-  color: #888;
-}
-
-.track-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.track-row p {
-  margin: 0;
+  color: var(--text-secondary);
 }
 
 .tag {
   display: inline-block;
-  margin-left: 0.5rem;
-  padding: 0 0.5rem;
+  margin-left: var(--space-2);
+  padding: 0 var(--space-2);
   border-radius: 999px;
-  background: #1db954;
-  color: #000;
-  font-size: 0.75rem;
-  font-weight: 600;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.7rem;
+  font-weight: 700;
   vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* ---------- Search ---------- */
+
+.search-form {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.search-form input {
+  flex: 1;
+  min-width: 0;
+  margin-top: 0;
+}
+
+/* ---------- Invite ---------- */
+
+.invite {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+}
+
+.qr-code {
+  display: block;
+  border-radius: var(--radius);
+}
+
+.copy-field {
+  display: flex;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.copy-field input {
+  flex: 1;
+  min-width: 0;
+  margin-top: 0;
+}
+
+/* ---------- Create party ---------- */
+
+.device {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--touch);
+  margin-bottom: 0;
+  color: var(--text);
+}
+
+.device small {
+  color: var(--text-secondary);
+}
+
+.confirm-box {
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-lg);
+}
+
+.confirm-box p {
+  margin: 0;
+}
+
+.confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* "Você entrou como Ana." sits right under the party header. */
+.party-header + .hint {
+  margin-top: calc(-1 * var(--space-4));
+  margin-bottom: var(--space-6);
 }
