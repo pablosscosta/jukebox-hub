@@ -167,9 +167,13 @@ Um `Track` mais:
   "id": "string",
   "status": "pending",
   "addedBy": { "id": "string", "displayName": "string" },
-  "addedAt": "2026-01-05T17:00:00Z"
+  "addedAt": "2026-01-05T17:00:00Z",
+  "startedAt": "2026-01-05T17:03:00Z | null"
 }
 ```
+`startedAt` existe quando a música já começou a tocar: com ele e `durationMs`, a tela desenha o
+progresso. `externalTrack` (a música do host pelo Spotify) também traz `startedAt`, estimado pela API a
+partir do progresso que o Spotify informou.
 
 ### Queue
 ```json

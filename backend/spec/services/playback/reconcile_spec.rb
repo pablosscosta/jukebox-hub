@@ -43,7 +43,7 @@ RSpec.describe Playback::Reconcile do
 
       expect([current.reload, next_song.reload].map(&:status)).to eq(%w[played pending])
       expect(party.reload.external_track).to include("trackId" => "hostChoice000000000000",
-                                                     "title" => "Garota de Ipanema")
+                                                     "title" => "Garota de Ipanema", "startedAt" => be_present)
     end
 
     it "checks again near the end of the host's song" do

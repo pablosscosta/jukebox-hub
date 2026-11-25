@@ -2,7 +2,7 @@ import { useEffect, useEffectEvent, useState } from 'react';
 import { ApiError, getMyParticipant, type Party } from '../../api/client';
 import { Jukebox } from '../party/Jukebox';
 import { EndPartyButton } from './EndPartyButton';
-import { PartyCard } from './PartyCard';
+import { InviteCard } from './InviteCard';
 
 type Props = {
   party: Party;
@@ -11,8 +11,9 @@ type Props = {
   onUnauthorized: () => void;
 };
 
-// The running party seen by the host: the invite, plus search and queue like any guest. The host
-// is a participant of their own party; the API finds it from the host token.
+// The running party seen by the host: what plays, search and queue like any guest (plus the host's
+// buttons), then the invite and, last and apart, ending the party. The host is a participant of
+// their own party; the API finds it from the host token.
 export function HostParty({ party, token, onEnded, onUnauthorized }: Props) {
   const [participantId, setParticipantId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +32,15 @@ export function HostParty({ party, token, onEnded, onUnauthorized }: Props) {
 
   return (
     <>
-      <PartyCard party={party} />
+      <div className="party-header">
+        <div>
+          <h2>{party.name}</h2>
+          <p>Tocando em {party.deviceName}</p>
+        </div>
+        <a className="button button-small" href="#convite">
+          Convidar
+        </a>
+      </div>
       {error && <p role="alert">{error}</p>}
       {participantId && (
         <Jukebox
@@ -43,12 +52,16 @@ export function HostParty({ party, token, onEnded, onUnauthorized }: Props) {
           onEnded={onEnded}
         />
       )}
-      <EndPartyButton
-        partyId={party.id}
-        token={token}
-        onEnded={onEnded}
-        onUnauthorized={onUnauthorized}
-      />
+      <InviteCard party={party} />
+      <footer className="page-footer">
+        <p className="hint">A party encerra sozinha depois de 6 h sem música.</p>
+        <EndPartyButton
+          partyId={party.id}
+          token={token}
+          onEnded={onEnded}
+          onUnauthorized={onUnauthorized}
+        />
+      </footer>
     </>
   );
 }

@@ -44,10 +44,22 @@ export function HostPage() {
 
   return (
     <main>
+      <header className="page-header">
+        <div>
+          <p className="hint">Jukebox Hub</p>
+          {host && <h1>Olá, {host.displayName}!</h1>}
+        </div>
+        <button
+          type="button"
+          className="button-ghost button-small"
+          onClick={() => void handleLogout()}
+        >
+          Sair
+        </button>
+      </header>
       {error && <p role="alert">{error}</p>}
       {host ? (
         <>
-          <h1>Olá, {host.displayName}!</h1>
           <HostContent
             host={host}
             party={party}
@@ -60,11 +72,8 @@ export function HostPage() {
           />
         </>
       ) : (
-        !error && <p>Carregando...</p>
+        !error && <p className="hint">Carregando...</p>
       )}
-      <button type="button" className="link" onClick={() => void handleLogout()}>
-        Sair
-      </button>
     </main>
   );
 }

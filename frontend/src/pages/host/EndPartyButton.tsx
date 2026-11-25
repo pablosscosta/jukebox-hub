@@ -32,6 +32,7 @@ export function EndPartyButton({ partyId, token, onEnded, onUnauthorized }: Prop
     return (
       <button
         type="button"
+        className="button-danger"
         onClick={() => {
           setConfirming(true);
         }}
@@ -42,21 +43,29 @@ export function EndPartyButton({ partyId, token, onEnded, onUnauthorized }: Prop
   }
 
   return (
-    <div role="group" aria-label="Confirmar encerramento">
+    <div className="confirm-box" role="group" aria-label="Confirmar encerramento">
       {error && <p role="alert">{error}</p>}
       <p>Encerrar a party? A música para e os convidados não podem mais adicionar.</p>
-      <button type="button" onClick={() => void handleEnd()} disabled={ending}>
-        {ending ? 'Encerrando...' : 'Sim, encerrar'}
-      </button>{' '}
-      <button
-        type="button"
-        onClick={() => {
-          setConfirming(false);
-        }}
-        disabled={ending}
-      >
-        Cancelar
-      </button>
+      <div className="confirm-actions">
+        <button
+          type="button"
+          className="button-danger"
+          onClick={() => void handleEnd()}
+          disabled={ending}
+        >
+          {ending ? 'Encerrando...' : 'Sim, encerrar'}
+        </button>
+        <button
+          type="button"
+          className="button-ghost"
+          onClick={() => {
+            setConfirming(false);
+          }}
+          disabled={ending}
+        >
+          Cancelar
+        </button>
+      </div>
     </div>
   );
 }

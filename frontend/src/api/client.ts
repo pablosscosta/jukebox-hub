@@ -57,7 +57,13 @@ export type QueueItem = Track & {
   status: 'pending' | 'playing';
   addedBy: { id: string; displayName: string };
   addedAt: string;
+  // Set once the song starts playing.
+  startedAt: string | null;
 };
+
+// A song the host played straight from the Spotify app. startedAt is estimated by the API from
+// how far the song had gone when the jukebox noticed it.
+export type ExternalTrack = Track & { startedAt?: string };
 
 // external: the host played a song straight from the Spotify app; the queue resumes after it.
 // paused: Spotify stopped in the middle of a song and the jukebox waits for the host.
@@ -69,7 +75,7 @@ export type Queue = {
   upNext: QueueItem[];
   maxPendingPerParticipant: number;
   playbackState: PlaybackState;
-  externalTrack: Track | null;
+  externalTrack: ExternalTrack | null;
 };
 
 type ErrorBody = { error?: { code?: string; message?: string } };

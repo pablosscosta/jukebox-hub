@@ -2,6 +2,9 @@ module PartyEvents
   # One per process: a thread that LISTENs on the events channel and hands each notice to the SSE
   # streams of that party. Streams wait on their own Thread::Queue, so they hold no database
   # connection while open: the whole process uses a single connection for listening.
+  #
+  # That connection is its own, opened outside Active Record's pool: a connection that spends its
+  # life inside LISTEN must never be handed to a request afterwards.
   class Listener
     include Singleton
 
@@ -19,6 +22,12 @@ module PartyEvents
     def subscribe(party_id)
       start if @autostart
       Thread::Queue.new.tap { |queue| @mutex.synchronize { @streams[party_id] << queue } }
+    end
+
+    # Ends the LISTEN thread (within WAIT_SECONDS) and frees its connection. Used before code is
+    # reloaded in development: the reloaded class starts a listener of its own.
+    def stop
+      @stopped = true
     end
 
     def unsubscribe(party_id, queue)
@@ -45,6 +54,8 @@ module PartyEvents
 
     def listen_forever
       loop do
+        break if @stopped
+
         listen
       rescue StandardError => e
         # A dropped connection must not stop the events: log, wait a little and listen again.
@@ -54,13 +65,18 @@ module PartyEvents
     end
 
     def listen
-      ActiveRecord::Base.connection_pool.with_connection do |connection|
-        pg = connection.raw_connection
-        pg.exec("LISTEN #{CHANNEL}")
-        loop { pg.wait_for_notify(WAIT_SECONDS) { |_channel, _pid, payload| deliver(payload) } }
-      ensure
-        pg&.exec("UNLISTEN *")
-      end
+      pg = PG.connect(**connection_params)
+      pg.exec("LISTEN #{CHANNEL}")
+      pg.wait_for_notify(WAIT_SECONDS) { |_channel, _pid, payload| deliver(payload) } until @stopped
+    ensure
+      pg&.close
+    end
+
+    # Same database as Active Record (config/database.yml or DATABASE_URL).
+    def connection_params
+      config = ActiveRecord::Base.connection_db_config.configuration_hash
+      { host: config[:host], port: config[:port], dbname: config[:database], user: config[:username],
+        password: config[:password] }.compact
     end
   end
 end

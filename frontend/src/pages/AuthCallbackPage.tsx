@@ -39,7 +39,7 @@ export function AuthCallbackPage() {
   }, [code, errorCode, navigate]);
 
   return (
-    <main>
+    <main className="hero">
       {error ? (
         <>
           <h1>Não foi possível entrar</h1>
@@ -47,7 +47,7 @@ export function AuthCallbackPage() {
           <Link to="/">Voltar para o início</Link>
         </>
       ) : (
-        <p>Entrando...</p>
+        <p className="hint">Entrando...</p>
       )}
     </main>
   );

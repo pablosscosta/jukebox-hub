@@ -26,7 +26,7 @@ RSpec.describe "Queue" do
         "id" => item.id.to_s, "trackId" => SpotifyHelpers::TRACK_ID, "title" => "Garota de Ipanema",
         "artist" => "Tom Jobim", "durationMs" => 323_000, "imageUrl" => "https://i.scdn.co/image/300",
         "status" => "playing", "addedBy" => { "id" => guest.id.to_s, "displayName" => "Ana" },
-        "addedAt" => item.created_at.as_json
+        "addedAt" => item.created_at.as_json, "startedAt" => item.started_at.as_json
       )
       expect(a_request(:get, %r{/v1/tracks/}).with(headers: { "Authorization" => "Bearer host-access-token" }))
         .to have_been_made
