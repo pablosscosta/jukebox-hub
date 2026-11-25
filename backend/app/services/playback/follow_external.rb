@@ -26,8 +26,10 @@ module Playback
 
     def track_json
       track = @playback.track
+      # When it started, from how far it already went: lets the screens draw its progress.
+      started_at = Time.current - @playback.progress_ms.fdiv(1000).seconds
       { trackId: track.id, title: track.title, artist: track.artist, durationMs: track.duration_ms,
-        imageUrl: track.image_url }
+        imageUrl: track.image_url, startedAt: started_at.iso8601(3) }
     end
   end
 end

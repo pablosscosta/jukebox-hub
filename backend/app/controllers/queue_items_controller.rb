@@ -57,6 +57,6 @@ class QueueItemsController < ApplicationController
     { id: item.id.to_s, trackId: item.track_id, title: item.title, artist: item.artist,
       durationMs: item.duration_ms, imageUrl: item.image_url, status: item.status,
       addedBy: { id: item.participant_id.to_s, displayName: item.participant.display_name },
-      addedAt: item.created_at }
+      addedAt: item.created_at, startedAt: item.started_at }
   end
 end
