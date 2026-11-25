@@ -10,6 +10,7 @@ module SpotifyHelpers
   TOKEN_URL = "https://accounts.spotify.com/api/token".freeze
   ME_URL = "https://api.spotify.com/v1/me".freeze
   DEVICES_URL = "https://api.spotify.com/v1/me/player/devices".freeze
+  SEARCH_URL = "https://api.spotify.com/v1/search".freeze
 
   def stub_spotify_token(body = default_token_body, status: 200)
     stub_request(:post, TOKEN_URL).to_return(status:, body: body.to_json, headers: json_headers)
@@ -22,6 +23,25 @@ module SpotifyHelpers
 
   def stub_spotify_devices(devices = [spotify_device], status: 200)
     stub_request(:get, DEVICES_URL).to_return(status:, body: { "devices" => devices }.to_json, headers: json_headers)
+  end
+
+  def stub_spotify_search(tracks = [spotify_track], status: 200)
+    stub_request(:get, SEARCH_URL).with(query: hash_including({}))
+                                  .to_return(status:, body: { "tracks" => { "items" => tracks } }.to_json,
+                                             headers: json_headers)
+  end
+
+  # A track as the Spotify API describes it (only the fields the jukebox reads, plus a few more).
+  def spotify_track(**overrides)
+    {
+      "id" => "track-1", "name" => "Garota de Ipanema", "duration_ms" => 323_000, "is_playable" => true,
+      "explicit" => false, "artists" => [{ "id" => "artist-1", "name" => "Tom Jobim" }],
+      "album" => { "name" => "Getz/Gilberto", "images" => [
+        { "url" => "https://i.scdn.co/image/640", "width" => 640, "height" => 640 },
+        { "url" => "https://i.scdn.co/image/300", "width" => 300, "height" => 300 },
+        { "url" => "https://i.scdn.co/image/64", "width" => 64, "height" => 64 }
+      ] }
+    }.merge(overrides.stringify_keys)
   end
 
   # A device as the Spotify API describes it.
