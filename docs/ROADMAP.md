@@ -28,6 +28,10 @@
 - [ ] Histórico de parties do host
 - [ ] Rate limiting por participante
 - [ ] Avaliar: host reordenar a fila (hoje a ordem é calculada pela regra justa)
+- [ ] Playlist de fundo: quando a fila acaba, tocar uma playlist escolhida pelo host (`context_uri`) até
+  alguém adicionar uma música. Hoje a música para: o Autoplay do Spotify só continua a partir de um
+  álbum ou playlist, e a jukebox toca músicas avulsas. A API de recomendações do Spotify não está
+  disponível para apps novos.
 - [ ] Avaliar: botões "Tocar a seguir" e "Tocar agora" na busca, só para o host
 - [ ] Avaliar: transição sem silêncio entre músicas
 - [ ] Avaliar: Web Playback SDK (a aba da Jukebox Hub como player, sem o app do Spotify)
