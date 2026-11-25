@@ -32,7 +32,7 @@ RSpec/ExampleLength:
   Max: 10
   CountAsOne: ["array", "hash", "heredoc", "method_call"]
 
-# Migrations are declarative: one long `change` reads better than splitting it up.
-Metrics/MethodLength:
+# Migrations describe tables, not logic: size metrics don't apply to them.
+Metrics:
   Exclude:
     - "db/migrate/**/*"

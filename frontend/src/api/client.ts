@@ -59,11 +59,17 @@ export type QueueItem = Track & {
   addedAt: string;
 };
 
+// external: the host played a song straight from the Spotify app; the queue resumes after it.
+// paused: Spotify stopped in the middle of a song and the jukebox waits for the host.
+export type PlaybackState = 'playing' | 'external' | 'idle' | 'paused';
+
 // upNext is already in play order: the API applies the fairness rule.
 export type Queue = {
   nowPlaying: QueueItem | null;
   upNext: QueueItem[];
   maxPendingPerParticipant: number;
+  playbackState: PlaybackState;
+  externalTrack: Track | null;
 };
 
 type ErrorBody = { error?: { code?: string; message?: string } };
@@ -173,6 +179,23 @@ export function addToQueue(partyId: string, trackId: string, token: string) {
   return request<QueueItem>(
     partyPath(partyId, '/queue'),
     { method: 'POST', body: JSON.stringify({ trackId }) },
+    token,
+  );
+}
+
+// Host only: skip the song that is playing, start a stopped queue, take a song out of the queue.
+export function skipTrack(partyId: string, token: string) {
+  return request<undefined>(partyPath(partyId, '/playback/next'), { method: 'POST' }, token);
+}
+
+export function startPlayback(partyId: string, token: string) {
+  return request<undefined>(partyPath(partyId, '/playback/start'), { method: 'POST' }, token);
+}
+
+export function removeFromQueue(partyId: string, itemId: string, token: string) {
+  return request<undefined>(
+    partyPath(partyId, `/queue/${encodeURIComponent(itemId)}`),
+    { method: 'DELETE' },
     token,
   );
 }

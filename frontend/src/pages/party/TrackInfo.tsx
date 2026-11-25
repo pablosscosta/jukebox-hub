@@ -1,9 +1,9 @@
 import type { Track } from '../../api/client';
 
-type Props = { track: Track; detail?: string };
+type Props = { track: Track; detail?: string; tag?: string };
 
 // Cover, title and artist: how a song looks in the search results and in the queue.
-export function TrackInfo({ track, detail }: Props) {
+export function TrackInfo({ track, detail, tag }: Props) {
   return (
     <span className="track-info">
       {track.imageUrl ? (
@@ -13,6 +13,7 @@ export function TrackInfo({ track, detail }: Props) {
       )}
       <span>
         <strong>{track.title}</strong>
+        {tag && <span className="tag">{tag}</span>}
         <br />
         <small>
           {track.artist}

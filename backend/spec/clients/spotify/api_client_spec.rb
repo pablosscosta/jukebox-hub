@@ -97,4 +97,44 @@ RSpec.describe Spotify::ApiClient do
       expect { client.track(SpotifyHelpers::TRACK_ID) }.to raise_error(Spotify::Error)
     end
   end
+
+  describe "#play" do
+    it "starts the track on the given device" do
+      stub_spotify_play
+
+      client.play(device_id: "device-1", track_id: SpotifyHelpers::TRACK_ID)
+
+      expect(a_request(:put, SpotifyHelpers::PLAY_URL)
+        .with(query: { "device_id" => "device-1" }, body: { uris: ["spotify:track:#{SpotifyHelpers::TRACK_ID}"] }))
+        .to have_been_made
+    end
+
+    it "raises DeviceNotFoundError when the device is gone" do
+      stub_spotify_play(status: 404)
+
+      expect { client.play(device_id: "device-1", track_id: SpotifyHelpers::TRACK_ID) }
+        .to raise_error(Spotify::DeviceNotFoundError)
+    end
+
+    it "raises Spotify::Error for other failures" do
+      stub_spotify_play(status: 403)
+
+      expect { client.play(device_id: "device-1", track_id: SpotifyHelpers::TRACK_ID) }
+        .to raise_error(Spotify::Error) { |error| expect(error).not_to be_a(Spotify::DeviceNotFoundError) }
+    end
+  end
+
+  describe "#playback" do
+    it "says what is playing and how far it went" do
+      stub_spotify_playback(track_id: "abc", progress_ms: 60_000, duration_ms: 180_000)
+
+      expect(client.playback).to have_attributes(track_id: "abc", playing: true, remaining_ms: 120_000)
+    end
+
+    it "is nil when Spotify isn't playing anywhere" do
+      stub_spotify_playback
+
+      expect(client.playback).to be_nil
+    end
+  end
 end

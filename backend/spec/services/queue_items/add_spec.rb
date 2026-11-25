@@ -5,6 +5,8 @@ RSpec.describe QueueItems::Add do
   let(:participant) { create(:participant, party:) }
   let(:spotify) { Spotify::ApiClient.new(access_token: "host-access-token") }
 
+  before { stub_spotify_play }
+
   def add(track_id = SpotifyHelpers::TRACK_ID, by: participant)
     described_class.call(participant: by, track_id:, spotify:)
   end
@@ -14,7 +16,7 @@ RSpec.describe QueueItems::Add do
 
     item = add
 
-    expect(item).to have_attributes(party:, participant:, status: "pending", track_id: SpotifyHelpers::TRACK_ID,
+    expect(item).to have_attributes(party:, participant:, track_id: SpotifyHelpers::TRACK_ID,
                                     title: "Garota de Ipanema", artist: "Tom Jobim", duration_ms: 323_000,
                                     image_url: "https://i.scdn.co/image/300")
   end
@@ -71,6 +73,44 @@ RSpec.describe QueueItems::Add do
       create_list(:queue_item, 5, participant: host)
 
       expect { add(by: host) }.to raise_error(described_class::LimitReached)
+    end
+  end
+
+  describe "starting the music" do
+    before { stub_spotify_track }
+
+    it "plays the song right away when nothing is playing" do
+      item = add
+
+      expect(item).to be_playing
+      expect(a_request(:put, SpotifyHelpers::PLAY_URL).with(query: { "device_id" => party.device_id }))
+        .to have_been_made
+    end
+
+    it "only queues the song when another one is playing" do
+      create(:queue_item, :playing, participant:)
+
+      expect(add).to be_pending
+      expect(a_request(:put, SpotifyHelpers::PLAY_URL).with(query: hash_including({}))).not_to have_been_made
+    end
+
+    it "plays the song right away after Spotify had stopped in the middle of a song" do
+      party.update!(playback_paused: true)
+
+      expect(add).to be_playing
+      expect(party.reload).not_to be_playback_paused
+    end
+
+    it "waits while the host's own song from Spotify plays" do
+      party.update!(external_track: { trackId: "hostChoice000000000000", title: "Have a Nice Day" })
+
+      expect(add).to be_pending
+    end
+
+    it "keeps the song in the queue when Spotify isn't open on the device" do
+      stub_spotify_play(status: 404)
+
+      expect(add).to be_pending
     end
   end
 end

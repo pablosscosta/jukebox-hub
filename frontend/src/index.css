@@ -132,3 +132,27 @@ button.link {
 .track-info small {
   color: #888;
 }
+
+.track-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.track-row p {
+  margin: 0;
+}
+
+.tag {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: #1db954;
+  color: #000;
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: middle;
+}

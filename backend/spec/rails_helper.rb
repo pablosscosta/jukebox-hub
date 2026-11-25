@@ -21,4 +21,7 @@ RSpec.configure do |config|
   config.infer_spec_type_from_file_location!
   config.filter_rails_from_backtrace!
   config.include FactoryBot::Syntax::Methods
+
+  # Jobs enqueued by one example must not leak into the next one's expectations.
+  config.before { ActiveJob::Base.queue_adapter.enqueued_jobs.clear }
 end

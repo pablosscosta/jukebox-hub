@@ -18,5 +18,8 @@ Rails.application.routes.draw do
     get "search", to: "searches#show"
     get "queue", to: "queue_items#index"
     post "queue", to: "queue_items#create"
+    delete "queue/:id", to: "queue_items#destroy"
+    post "playback/next", to: "playbacks#next_track"
+    post "playback/start", to: "playbacks#start"
   end
 end

@@ -1,6 +1,14 @@
 import { useEffect, useEffectEvent, useMemo, useState } from 'react';
-import { ApiError, getQueue, type Queue } from '../../api/client';
-import { QueueList } from './QueueList';
+import {
+  ApiError,
+  getQueue,
+  removeFromQueue,
+  skipTrack,
+  startPlayback,
+  type Queue,
+  type QueueItem,
+} from '../../api/client';
+import { QueueList, type HostControls } from './QueueList';
 import { TrackSearch } from './TrackSearch';
 
 type Props = {
@@ -8,18 +16,30 @@ type Props = {
   // The guest's participant token, or the host's own token.
   token: string;
   participantId: string;
+  // The host sees the same jukebox plus the buttons to skip, start and remove songs.
+  isHost?: boolean;
   onUnauthorized: () => void;
   onEnded: () => void;
 };
 
 // Search and queue, the same for guests and the host. The queue doesn't update by itself yet
 // (that comes with real time): it reloads after each song added and with the "Atualizar" button.
-export function Jukebox({ partyId, token, participantId, onUnauthorized, onEnded }: Props) {
+export function Jukebox({
+  partyId,
+  token,
+  participantId,
+  isHost = false,
+  onUnauthorized,
+  onEnded,
+}: Props) {
   const [queue, setQueue] = useState<Queue | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Kept apart from the loading error: reloading the queue after a failed action must not hide why it failed.
+  const [actionError, setActionError] = useState<string | null>(null);
   // Bumping it reloads the queue (after adding a song or with the "Atualizar" button).
   const [reloadKey, setReloadKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [hostBusy, setHostBusy] = useState(false);
 
   // Returns true when the error ends the visit and the page takes over.
   function handleFatalError(err: unknown) {
@@ -62,6 +82,31 @@ export function Jukebox({ partyId, token, participantId, onUnauthorized, onEnded
     setReloadKey((key) => key + 1);
   }
 
+  async function runHostAction(action: () => Promise<unknown>) {
+    setHostBusy(true);
+    setActionError(null);
+    try {
+      await action();
+    } catch (err) {
+      if (!handleFatalError(err)) {
+        setActionError(err instanceof ApiError ? err.message : 'Algo deu errado. Tente de novo.');
+      }
+    } finally {
+      setHostBusy(false);
+      reload();
+    }
+  }
+
+  const hostControls: HostControls | undefined = isHost
+    ? {
+        busy: hostBusy,
+        onSkip: () => void runHostAction(() => skipTrack(partyId, token)),
+        onStart: () => void runHostAction(() => startPlayback(partyId, token)),
+        onRemove: (item: QueueItem) =>
+          void runHostAction(() => removeFromQueue(partyId, item.id, token)),
+      }
+    : undefined;
+
   const queuedTrackIds = useMemo(
     () =>
       new Set(
@@ -100,12 +145,13 @@ export function Jukebox({ partyId, token, participantId, onUnauthorized, onEnded
           </button>
         </div>
         {error && <p role="alert">{error}</p>}
+        {actionError && <p role="alert">{actionError}</p>}
         {queue ? (
           <>
             <p className="hint">
               Suas músicas esperando: {myPending} de {queue.maxPendingPerParticipant}
             </p>
-            <QueueList queue={queue} participantId={participantId} />
+            <QueueList queue={queue} participantId={participantId} hostControls={hostControls} />
           </>
         ) : (
           !error && <p>Carregando a fila...</p>

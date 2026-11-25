@@ -19,7 +19,8 @@ Segue as convenções do Rails, sem camadas extras:
 - `app/models`: entidades (`Party`, `Participant`, `QueueItem`), validações e regras simples.
 - `app/services`: casos de uso com mais de um passo (ex.: `QueueItems::Add`, `Playback::Advance`).
 - `app/clients/spotify`: cliente HTTP da Spotify Web API, isolado para ser substituído nos testes.
-- `app/jobs`: tarefas em background com Solid Queue (avançar faixa, expirar parties).
+- `app/jobs`: tarefas em background com Solid Queue, no mesmo Postgres e rodando dentro do Puma
+  (`CheckPlaybackJob` avança a fila; depois, expirar parties).
 
 ## Fluxos principais
 1. **Criar party**: o host entra com o Spotify (Authorization Code + PKCE, feito todo no backend) e recebe
@@ -38,6 +39,8 @@ Segue as convenções do Rails, sem camadas extras:
 | Tempo real | SSE + Postgres `LISTEN/NOTIFY` | [0004](adr/0004-sse-com-postgres-listen-notify.md) |
 | Testes | RSpec + FactoryBot | [0005](adr/0005-rspec-factorybot.md) |
 | Login do host | OAuth no backend + token Bearer | [0006](adr/0006-autenticacao-do-host.md) |
+| Fila | Limite de 5 esperando e ordem justa calculada | [0007](adr/0007-fila-justa.md) |
+| Avanço da fila | Job agendado que confere o Spotify antes de agir | [0008](adr/0008-avanco-da-fila.md) |
 
 ## Restrições conhecidas
 - O Spotify não aceita `localhost` em redirect URIs, só `127.0.0.1`. Por isso, em dev, o host usa
@@ -46,6 +49,9 @@ Segue as convenções do Rails, sem camadas extras:
 - A Spotify Web API só permite controlar o playback de contas **Premium**. A API guarda o plano do
   host (campo `product` do perfil) a cada login e só deixa criar party se ele for Premium. Apps em modo de
   desenvolvimento aceitam apenas usuários cadastrados no painel do Spotify.
+- A Spotify Web API não avisa quando uma música acaba ou quando o host dá play pelo app do Spotify: a
+  jukebox precisa perguntar. Por isso o avanço é por job agendado que confere antes de agir
+  ([ADR 0008](adr/0008-avanco-da-fila.md)).
 - Cada conexão SSE ocupa uma thread do Puma. O número de threads (`RAILS_MAX_THREADS`) e o
   heartbeat/timeout das conexões precisam ser dimensionados.
 
