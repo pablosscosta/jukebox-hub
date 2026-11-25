@@ -15,5 +15,8 @@ Rails.application.routes.draw do
   resources :parties, only: %i[create show] do
     resources :participants, only: :create
     get "participants/me", to: "participants#me"
+    get "search", to: "searches#show"
+    get "queue", to: "queue_items#index"
+    post "queue", to: "queue_items#create"
   end
 end

@@ -12,7 +12,7 @@ RSpec.describe "Participants" do
         expect(response).to have_http_status(:created)
         expect(response.parsed_body).to eq(
           "participantToken" => response.parsed_body["participantToken"],
-          "participant" => { "id" => participant.id.to_s, "displayName" => "Ana",
+          "participant" => { "id" => participant.id.to_s, "displayName" => "Ana", "role" => "guest",
                              "joinedAt" => Time.current.as_json }
         )
         expect(Participant.authenticate(response.parsed_body["participantToken"])).to eq(participant)
@@ -73,6 +73,21 @@ RSpec.describe "Participants" do
 
     it "answers 401 with an unknown token" do
       get_me(bearer: "made-up")
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it "returns the host's own participant when called with the host's token" do
+      host_token = HostToken.issue!(host: party.host, kind: :access)
+
+      get_me(bearer: host_token)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to include("role" => "host", "displayName" => party.host.display_name)
+    end
+
+    it "answers 401 with the token of another party's host" do
+      get_me(bearer: HostToken.issue!(host: create(:host), kind: :access))
 
       expect(response).to have_http_status(:unauthorized)
     end

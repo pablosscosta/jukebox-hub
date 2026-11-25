@@ -90,3 +90,45 @@ button.link {
   margin: 0 0 1rem;
   border-radius: 0.5rem;
 }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.tracks {
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.tracks li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #8883;
+}
+
+.track-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.track-info img,
+.track-cover-placeholder {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 0.25rem;
+  background: #8884;
+}
+
+.track-info small {
+  color: #888;
+}

@@ -48,13 +48,25 @@ O login é feito por navegação no navegador (não por `fetch`):
   `{ "participantToken": "...", "participant": Participant }`. Erros: `404 party_not_found`,
   `410 party_ended` (party encerrada ou expirada) e `422 invalid_participant` (nome com mais de 40
   caracteres).
-- `GET /parties/{id}/participants/me`: o convidado dono do token (`Participant`). Serve para quem volta
-  à página conferir se o token salvo no aparelho ainda vale. `401` se o token não é dessa party, `410`
-  se a party acabou.
+- `GET /parties/{id}/participants/me`: o participante dono do token (`Participant`). Serve para quem
+  volta à página conferir se o token salvo no aparelho ainda vale. Com o token do host da party,
+  devolve o participante do próprio host. `401` se o token não é dessa party, `410` se a party acabou.
 
-### Fila
-- `GET /parties/{id}/queue`: fila atual (item tocando + pendentes).
-- `POST /parties/{id}/queue`: adiciona uma faixa (`trackId`).
+### Busca e fila ✅
+Estes endpoints aceitam o token do participante **ou** o token do host da party. Todos respondem
+`404 party_not_found`, `410 party_ended` e `401` sem token válido. As chamadas ao Spotify usam a conta
+do host: se ela desconectou, `503 host_spotify_disconnected`; se o Spotify falhar, `502
+spotify_unavailable`.
+
+- `GET /parties/{id}/search?q=...`: busca até 10 músicas (`Track[]`) que podem tocar no país do host.
+  `422 invalid_query` para busca vazia ou com mais de 100 caracteres.
+- `GET /parties/{id}/queue`: a fila (`Queue`). `upNext` já vem na ordem de tocar
+  ([ADR 0007](adr/0007-fila-justa.md)).
+- `POST /parties/{id}/queue`: adiciona uma música. Body `{ "trackId": "..." }`, com o id vindo da busca.
+  Título, artista e capa são buscados no Spotify. Devolve `201` com o `QueueItem`. Erros:
+  - `409 already_queued`: a música já está esperando ou tocando.
+  - `409 queue_limit_reached`: o participante já tem 5 músicas esperando.
+  - `422 invalid_track`: o id não é de uma faixa que pode tocar.
 - `DELETE /parties/{id}/queue/{itemId}`: remove um item. Só o host.
 
 ### Playback
@@ -116,21 +128,41 @@ O que qualquer pessoa com o link vê. Não inclui device nem link de convite.
 {
   "id": "string",
   "displayName": "string",
+  "role": "guest",
   "joinedAt": "2026-01-05T17:00:00Z"
 }
 ```
+`role` é `guest` ou `host`.
+
+### Track
+```json
+{
+  "trackId": "string",
+  "title": "Garota de Ipanema",
+  "artist": "Tom Jobim, Vinicius de Moraes",
+  "durationMs": 215000,
+  "imageUrl": "https://i.scdn.co/image/... | null"
+}
+```
+Com mais de um artista, os nomes vêm juntos, separados por vírgula. A capa é a de ~300 px.
 
 ### QueueItem
+Um `Track` mais:
 ```json
 {
   "id": "string",
-  "trackId": "string",
-  "title": "string",
-  "artist": "string",
-  "durationMs": 215000,
   "status": "pending",
-  "addedBy": { "id": "string", "displayName": "string | null" },
+  "addedBy": { "id": "string", "displayName": "string" },
   "addedAt": "2026-01-05T17:00:00Z"
+}
+```
+
+### Queue
+```json
+{
+  "nowPlaying": "QueueItem | null",
+  "upNext": ["QueueItem"],
+  "maxPendingPerParticipant": 5
 }
 ```
 

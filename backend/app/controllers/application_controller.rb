@@ -13,9 +13,10 @@ class ApplicationController < ActionController::API
 
   private
 
-  # Spotify Web API client acting as the logged-in host, with a token that is still valid.
-  def spotify_api
-    Spotify::ApiClient.new(access_token: SpotifyAuth::FreshAccessToken.call(current_host))
+  # Spotify Web API client acting as a host (the logged-in one by default), with a token that is
+  # still valid.
+  def spotify_api(host = current_host)
+    Spotify::ApiClient.new(access_token: SpotifyAuth::FreshAccessToken.call(host))
   end
 
   # Every error follows the same shape: { "error": { "code": "...", "message": "..." } }.
@@ -55,7 +56,8 @@ class ApplicationController < ActionController::API
   end
 
   def participant_json(participant)
-    { id: participant.id.to_s, displayName: participant.display_name, joinedAt: participant.created_at }
+    { id: participant.id.to_s, displayName: participant.display_name, role: participant.role,
+      joinedAt: participant.created_at }
   end
 
   # The invite link points to the frontend, where guests join the party.

@@ -6,6 +6,7 @@ class Party < ApplicationRecord
 
   belongs_to :host
   has_many :participants, dependent: :delete_all
+  has_many :queue_items, dependent: :delete_all
 
   enum :status, { active: "active", ended: "ended" }, validate: true
 
@@ -16,6 +17,25 @@ class Party < ApplicationRecord
   # Friendly error for the common case; the partial unique index in the database is what
   # really guarantees it when two requests arrive at the same time.
   validates :host_id, uniqueness: { conditions: -> { active }, message: :already_has_active_party }, if: :active?
+
+  # The host's own participant row, created the first time they need it (e.g. to add a song).
+  # The unique index on (party, host role) settles two requests creating it at once.
+  def now_playing
+    queue_items.playing.includes(:participant).first
+  end
+
+  # Pending songs in the order they will play (see QueueItems::PlayOrder).
+  def up_next
+    recent = queue_items.recently_started.limit(QueueItems::PlayOrder::MAX_IN_A_ROW).pluck(:participant_id)
+    QueueItems::PlayOrder.call(pending: queue_items.pending.includes(:participant).in_arrival_order,
+                               recent_participant_ids: recent)
+  end
+
+  def host_participant
+    participants.host.create_or_find_by!(role: :host) do |participant|
+      participant.display_name = host.display_name.to_s.truncate(Participant::NAME_MAX_LENGTH)
+    end
+  end
 
   def expired?
     expires_at <= Time.current

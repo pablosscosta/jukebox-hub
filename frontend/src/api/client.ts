@@ -39,7 +39,31 @@ export type PublicParty = {
 export type Participant = {
   id: string;
   displayName: string;
+  role: 'guest' | 'host';
   joinedAt: string;
+};
+
+// A song found in the Spotify search.
+export type Track = {
+  trackId: string;
+  title: string;
+  artist: string;
+  durationMs: number;
+  imageUrl: string | null;
+};
+
+export type QueueItem = Track & {
+  id: string;
+  status: 'pending' | 'playing';
+  addedBy: { id: string; displayName: string };
+  addedAt: string;
+};
+
+// upNext is already in play order: the API applies the fairness rule.
+export type Queue = {
+  nowPlaying: QueueItem | null;
+  upNext: QueueItem[];
+  maxPendingPerParticipant: number;
 };
 
 type ErrorBody = { error?: { code?: string; message?: string } };
@@ -129,4 +153,26 @@ export function joinParty(partyId: string, displayName: string) {
 
 export function getMyParticipant(partyId: string, token: string) {
   return request<Participant>(`/parties/${encodeURIComponent(partyId)}/participants/me`, {}, token);
+}
+
+// For the calls below the token is the guest's participant token or the host's own token.
+function partyPath(partyId: string, path: string) {
+  return `/parties/${encodeURIComponent(partyId)}${path}`;
+}
+
+export function searchTracks(partyId: string, query: string, token: string) {
+  const params = new URLSearchParams({ q: query });
+  return request<Track[]>(partyPath(partyId, `/search?${params.toString()}`), {}, token);
+}
+
+export function getQueue(partyId: string, token: string) {
+  return request<Queue>(partyPath(partyId, '/queue'), {}, token);
+}
+
+export function addToQueue(partyId: string, trackId: string, token: string) {
+  return request<QueueItem>(
+    partyPath(partyId, '/queue'),
+    { method: 'POST', body: JSON.stringify({ trackId }) },
+    token,
+  );
 }

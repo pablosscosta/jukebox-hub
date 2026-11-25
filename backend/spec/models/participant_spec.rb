@@ -16,6 +16,20 @@ RSpec.describe Participant do
     end
   end
 
+  describe "roles" do
+    it "requires a token for guests but not for the host, who uses the host token" do
+      expect(build(:participant, token_digest: nil)).not_to be_valid
+      expect(build(:participant, :host, token_digest: nil)).to be_valid
+    end
+
+    it "requires the guest token in the database too" do
+      participant = build(:participant, token_digest: nil)
+
+      expect { participant.save!(validate: false) }
+        .to raise_error(ActiveRecord::StatementInvalid, /participants_guest_token_check/)
+    end
+  end
+
   describe ".authenticate" do
     it "finds the participant by the raw token, storing only its digest" do
       raw = described_class.generate_token

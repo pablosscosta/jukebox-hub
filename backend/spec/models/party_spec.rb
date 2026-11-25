@@ -73,6 +73,25 @@ RSpec.describe Party do
     end
   end
 
+  describe "#host_participant" do
+    it "creates the host's participant once, named after the host" do
+      party = create(:party, host: create(:host, display_name: "Pablo"))
+
+      first = party.host_participant
+
+      expect(first).to have_attributes(role: "host", display_name: "Pablo", token_digest: nil)
+      expect(party.host_participant).to eq(first)
+      expect(party.participants.host.count).to eq(1)
+    end
+
+    it "allows only one host participant per party in the database" do
+      party = create(:party)
+      party.host_participant
+
+      expect { create(:participant, :host, party:) }.to raise_error(ActiveRecord::RecordNotUnique)
+    end
+  end
+
   describe "#expired?" do
     it "is true once expires_at has passed" do
       expect(build(:party, :expired)).to be_expired

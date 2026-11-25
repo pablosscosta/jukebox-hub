@@ -37,4 +37,64 @@ RSpec.describe Spotify::ApiClient do
       expect { client.devices }.to raise_error(Spotify::Error) { |error| expect(error.status).to eq(503) }
     end
   end
+
+  describe "#search_tracks" do
+    it "searches tracks playable in the host's country, up to 10" do
+      stub_spotify_search
+
+      tracks = client.search_tracks("ipanema")
+
+      expect(tracks.map(&:title)).to eq(["Garota de Ipanema"])
+      expect(a_request(:get, SpotifyHelpers::SEARCH_URL)
+        .with(query: { "type" => "track", "q" => "ipanema", "limit" => "10", "market" => "from_token" },
+              headers: { "Authorization" => "Bearer host-access-token" })).to have_been_made
+    end
+
+    it "leaves out tracks that can't be played" do
+      stub_spotify_search([spotify_track(id: "blocked", is_playable: false), nil, spotify_track])
+
+      expect(client.search_tracks("ipanema").map(&:id)).to eq([SpotifyHelpers::TRACK_ID])
+    end
+
+    it "returns an empty list when nothing matches" do
+      stub_spotify_search([])
+
+      expect(client.search_tracks("zzzz")).to eq([])
+    end
+
+    it "raises Spotify::Error when Spotify fails" do
+      stub_spotify_search([], status: 429)
+
+      expect { client.search_tracks("ipanema") }.to raise_error(Spotify::Error)
+    end
+  end
+
+  describe "#track" do
+    it "returns the track, as playable in the host's country" do
+      stub_spotify_track
+
+      expect(client.track(SpotifyHelpers::TRACK_ID)).to have_attributes(id: SpotifyHelpers::TRACK_ID,
+                                                                        title: "Garota de Ipanema")
+      expect(a_request(:get, "#{SpotifyHelpers::TRACKS_URL}/#{SpotifyHelpers::TRACK_ID}")
+        .with(query: { "market" => "from_token" })).to have_been_made
+    end
+
+    it "returns nil when the track doesn't exist" do
+      stub_spotify_track(nil, status: 404)
+
+      expect(client.track(SpotifyHelpers::TRACK_ID)).to be_nil
+    end
+
+    it "returns nil when the track can't be played in the host's country" do
+      stub_spotify_track(spotify_track(is_playable: false))
+
+      expect(client.track(SpotifyHelpers::TRACK_ID)).to be_nil
+    end
+
+    it "raises Spotify::Error for other failures" do
+      stub_spotify_track(nil, status: 500)
+
+      expect { client.track(SpotifyHelpers::TRACK_ID) }.to raise_error(Spotify::Error)
+    end
+  end
 end
