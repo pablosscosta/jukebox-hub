@@ -67,10 +67,20 @@ spotify_unavailable`.
   - `409 already_queued`: a música já está esperando ou tocando.
   - `409 queue_limit_reached`: o participante já tem 5 músicas esperando.
   - `422 invalid_track`: o id não é de uma faixa que pode tocar.
-- `DELETE /parties/{id}/queue/{itemId}`: remove um item. Só o host.
+- `DELETE /parties/{id}/queue/{itemId}`: tira da fila uma música que ainda está esperando. Só o host
+  (`403 forbidden` para convidado). `204`, ou `404 queue_item_not_found` se ela não está mais esperando.
 
-### Playback
-- `POST /parties/{id}/playback/next`: pula para a próxima faixa. Só o host.
+Uma música adicionada a uma fila parada começa a tocar na hora. Abrir a fila também confere o que o
+Spotify está tocando, no máximo uma vez a cada 20 s por party ([ADR 0008](adr/0008-avanco-da-fila.md)).
+
+### Playback ✅
+Só o host (`403 forbidden` para convidado). As duas respondem `204`, ou `422 device_unavailable` se o
+Spotify não está aberto no device da party.
+
+- `POST /parties/{id}/playback/next`: pula a música que está tocando e toca a próxima da fila. Com a
+  música do host tocando, volta para a fila.
+- `POST /parties/{id}/playback/start`: toca a fila quando nada está tocando (por exemplo, depois de o
+  Spotify parar) ou volta para a fila no lugar da música do host. Não pula a música que já está tocando.
 
 ### Eventos
 - `GET /parties/{id}/events`: stream SSE (`text/event-stream`).
@@ -162,9 +172,17 @@ Um `Track` mais:
 {
   "nowPlaying": "QueueItem | null",
   "upNext": ["QueueItem"],
-  "maxPendingPerParticipant": 5
+  "maxPendingPerParticipant": 5,
+  "playbackState": "playing",
+  "externalTrack": "Track | null"
 }
 ```
+`playbackState`:
+- `playing`: tocando uma música da fila (`nowPlaying`).
+- `external`: tocando uma música que o host colocou direto no app do Spotify (`externalTrack`). A fila
+  volta quando ela acaba.
+- `paused`: o Spotify parou no meio de uma música; o host toca de novo com `playback/start`.
+- `idle`: nada tocando.
 
 ## Eventos SSE
 | Evento | Quando | Payload |

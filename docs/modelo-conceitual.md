@@ -31,6 +31,7 @@ Uma sessão da jukebox, criada por um host autenticado no Spotify.
 - **deviceId** e **deviceName**: dispositivo Spotify onde a música toca (o nome é guardado para exibição)
 - **status**: `active` | `ended`
 - **expiresAt**: momento em que a party expira automaticamente
+- **externalTrack**: música que o host colocou direto no app do Spotify, quando é o caso (ver regras)
 - **createdAt**: data/hora de criação
 
 O link de compartilhamento e o QR code são **derivados** do `id` (não são armazenados).
@@ -74,7 +75,13 @@ Uma música adicionada à fila.
   um job remove os dados de parties encerradas. Ver [ADR 0002](adr/0002-postgresql-party-efemera.md).
 - **Uma party ativa por host**: para criar outra, o host precisa encerrar a atual (ou esperar ela
   expirar). Garantida também por índice único parcial no banco.
-- **Controle do host**: apenas o host pode pular faixa, remover itens da fila e encerrar a party.
+- **Avanço automático**: quando uma música acaba, a próxima da ordem justa toca sozinha. A primeira
+  começa assim que entra numa fila parada. Ver [ADR 0008](adr/0008-avanco-da-fila.md).
+- **Música do host pelo Spotify**: se o host dá play direto no app do Spotify, essa música "fura a fila":
+  aparece como tocando, a música da fila que foi interrompida conta como tocada, e a fila volta quando
+  ela acaba.
+- **Controle do host**: apenas o host pode pular faixa, remover itens da fila, tocar a fila parada e
+  encerrar a party.
 - **Party encerrada é somente leitura**: não aceita novos participantes nem músicas.
 
 ---
