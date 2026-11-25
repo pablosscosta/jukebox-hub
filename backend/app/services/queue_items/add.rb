@@ -45,7 +45,9 @@ module QueueItems
       @spotify.track(@track_id) || raise(InvalidTrack)
     end
 
+    # Adding a song is activity: the party's expiration moves forward.
     def create_item(track)
+      @party.extend_lifetime!
       @party.queue_items.create!(participant: @participant, track_id: track.id, title: track.title,
                                  artist: track.artist, duration_ms: track.duration_ms, image_url: track.image_url)
     end

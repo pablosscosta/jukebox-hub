@@ -39,6 +39,15 @@ RSpec.describe QueueItems::Add do
     expect { add }.to raise_error(described_class::AlreadyQueued)
   end
 
+  it "pushes the party's expiration forward" do
+    stub_spotify_track
+    party.update!(expires_at: 1.hour.from_now)
+
+    add
+
+    expect(party.reload.expires_at).to be > 5.hours.from_now
+  end
+
   it "accepts a song again once it was played" do
     stub_spotify_track
     create(:queue_item, :played, participant:, track_id: SpotifyHelpers::TRACK_ID)

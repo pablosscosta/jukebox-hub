@@ -1,7 +1,9 @@
 # A jukebox session: guests add songs to a queue that plays on the host's Spotify device.
 class Party < ApplicationRecord
-  # Parties are ephemeral (ADR 0002): they expire after this long without activity.
+  # Parties are ephemeral (ADR 0002): they expire after this long without activity, and their data
+  # is deleted a while after they end.
   LIFETIME = 6.hours
+  KEEP_ENDED_FOR = 24.hours
   NAME_MAX_LENGTH = 60
 
   belongs_to :host
@@ -9,6 +11,14 @@ class Party < ApplicationRecord
   has_many :queue_items, dependent: :delete_all
 
   enum :status, { active: "active", ended: "ended" }, validate: true
+
+  # Still marked active, but past the expiration: ExpirePartiesJob closes them.
+  scope :overdue, -> { active.where(expires_at: ...Time.current) }
+  scope :ended_long_ago, -> { ended.where(ended_at: ...KEEP_ENDED_FOR.ago) }
+
+  before_save -> { self.ended_at ||= Time.current }, if: -> { will_save_change_to_status? && ended? }
+  # The open screens follow what plays and learn when the party is over (see PartyEvents).
+  after_save :publish_changes
 
   attribute :expires_at, default: -> { LIFETIME.from_now }
 
@@ -66,6 +76,11 @@ class Party < ApplicationRecord
     end
   end
 
+  # Each song added or started pushes the expiration forward: a lively party never expires mid-song.
+  def extend_lifetime!
+    update!(expires_at: LIFETIME.from_now)
+  end
+
   def expired?
     expires_at <= Time.current
   end
@@ -73,5 +88,15 @@ class Party < ApplicationRecord
   # Accepts guests and songs. An expired party still marked active is already over for them.
   def open?
     active? && !expired?
+  end
+
+  private
+
+  def publish_changes
+    if saved_change_to_status? && ended?
+      PartyEvents.publish(id, "party_ended")
+    elsif saved_change_to_external_track? || saved_change_to_playback_paused?
+      PartyEvents.publish(id, "queue_changed")
+    end
   end
 end

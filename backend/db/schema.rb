@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_25_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_25_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -65,6 +65,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_160000) do
     t.boolean "playback_paused", default: false, null: false
     t.jsonb "external_track"
     t.datetime "playback_checked_at"
+    t.datetime "ended_at"
+    t.index ["ended_at"], name: "index_parties_on_ended_at", where: "((status)::text = 'ended'::text)"
     t.index ["host_id"], name: "index_parties_on_host_id"
     t.index ["host_id"], name: "index_parties_one_active_per_host", unique: true, where: "((status)::text = 'active'::text)"
     t.check_constraint "char_length(name::text) >= 1 AND char_length(name::text) <= 60", name: "parties_name_length_check"

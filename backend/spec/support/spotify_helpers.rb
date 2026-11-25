@@ -14,6 +14,7 @@ module SpotifyHelpers
   TRACKS_URL = "https://api.spotify.com/v1/tracks".freeze
   PLAYER_URL = "https://api.spotify.com/v1/me/player".freeze
   PLAY_URL = "https://api.spotify.com/v1/me/player/play".freeze
+  PAUSE_URL = "https://api.spotify.com/v1/me/player/pause".freeze
   # Spotify ids have 22 letters and digits; the jukebox checks the format.
   TRACK_ID = "4uLU6hMCjMI75M1A2tKUQC".freeze
 
@@ -46,6 +47,10 @@ module SpotifyHelpers
   def stub_spotify_play(status: 204)
     body = status == 204 ? "" : { "error" => { "status" => status, "message" => "Device not found" } }.to_json
     stub_request(:put, PLAY_URL).with(query: hash_including({})).to_return(status:, body:, headers: json_headers)
+  end
+
+  def stub_spotify_pause(status: 204)
+    stub_request(:put, PAUSE_URL).with(query: hash_including({})).to_return(status:, body: "")
   end
 
   # What GET /me/player answers. Without a track, Spotify isn't playing anywhere (204, no body).

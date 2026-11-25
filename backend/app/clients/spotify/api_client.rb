@@ -50,6 +50,11 @@ module Spotify
       raise
     end
 
+    # Docs: https://developer.spotify.com/documentation/web-api/reference/pause-a-users-playback
+    def pause(device_id:)
+      request("PUT", "/me/player/pause", { device_id: })
+    end
+
     # What is playing now, or nil when Spotify isn't playing anywhere (it answers 204).
     # Docs: https://developer.spotify.com/documentation/web-api/reference/get-information-about-the-users-current-playback
     def playback

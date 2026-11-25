@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   get "me/party", to: "me/party#show"
 
   resources :parties, only: %i[create show] do
+    post "end", to: "parties#finish", on: :member
     resources :participants, only: :create
     get "participants/me", to: "participants#me"
     get "search", to: "searches#show"
@@ -21,5 +22,6 @@ Rails.application.routes.draw do
     delete "queue/:id", to: "queue_items#destroy"
     post "playback/next", to: "playbacks#next_track"
     post "playback/start", to: "playbacks#start"
+    get "events", to: "events#show"
   end
 end

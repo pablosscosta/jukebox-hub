@@ -98,4 +98,36 @@ RSpec.describe Party do
       expect(build(:party)).not_to be_expired
     end
   end
+
+  describe "lifetime" do
+    it "moves the expiration forward with each activity" do
+      party = create(:party)
+
+      travel(2.hours) do
+        party.extend_lifetime!
+
+        expect(party.expires_at).to be_within(1.second).of(6.hours.from_now)
+      end
+    end
+
+    it "records when the party ended" do
+      party = create(:party)
+
+      freeze_time do
+        party.ended!
+
+        expect(party.ended_at).to eq(Time.current)
+      end
+    end
+
+    it "knows which parties are overdue and which ended long ago" do
+      overdue = create(:party, :expired)
+      create(:party)
+      old = create(:party, :ended)
+      old.update!(ended_at: 25.hours.ago)
+      create(:party, :ended)
+
+      expect([described_class.overdue, described_class.ended_long_ago]).to eq([[overdue], [old]])
+    end
+  end
 end
