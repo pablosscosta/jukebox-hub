@@ -32,10 +32,16 @@ module Auth
       redirect_to_frontend(code: login_code)
     rescue Spotify::Error, ActionController::ParameterMissing => e
       Rails.logger.warn("[spotify-auth] login failed: #{e.class}: #{e.message}")
-      redirect_to_frontend(error: "login_failed")
+      redirect_to_frontend(error: not_allowed?(e) ? "not_allowed" : "login_failed")
     end
 
     private
+
+    # In Spotify's development mode only accounts listed in the app's dashboard (User Management)
+    # can use the API: anyone else logs in on Spotify and then gets 403 from it.
+    def not_allowed?(error)
+      error.is_a?(Spotify::Error) && error.status == 403
+    end
 
     def accounts
       @accounts ||= Spotify::AccountsClient.new
