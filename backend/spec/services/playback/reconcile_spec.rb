@@ -57,6 +57,15 @@ RSpec.describe Playback::Reconcile do
       end
     end
 
+    it "trusts nothing in the first seconds, while Spotify may still report the old state" do
+      current.update!(started_at: 2.seconds.ago)
+      stub_spotify_playback
+
+      expect(reconcile.status).to eq(:unchanged)
+      expect(current.reload).to be_playing
+      expect(party.reload).not_to be_playback_paused
+    end
+
     it "waits for the host when Spotify stopped in the middle of the song" do
       stub_spotify_playback
 

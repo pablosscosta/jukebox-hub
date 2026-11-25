@@ -10,7 +10,7 @@ FactoryBot.define do
 
     trait :playing do
       status { :playing }
-      started_at { Time.current }
+      started_at { 1.minute.ago }
     end
 
     trait :played do
