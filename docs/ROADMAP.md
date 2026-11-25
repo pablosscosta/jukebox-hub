@@ -15,7 +15,8 @@
   duplicatas e sem 3 seguidas da mesma pessoa quando há outras na fila ([ADR 0007](adr/0007-fila-justa.md))
 - [x] **Playback**: avanço automático ao fim da faixa; pular, remover e tocar só pelo host; música
   tocada direto no app do Spotify "fura a fila" ([ADR 0008](adr/0008-avanco-da-fila.md))
-- [ ] **Tempo real e ciclo de vida**: eventos SSE, encerramento manual e expiração da party
+- [x] **Tempo real e ciclo de vida**: fila ao vivo por SSE, encerramento pelo host, expiração após 6 h
+  sem atividade e limpeza dos dados ([ADR 0004](adr/0004-sse-com-postgres-listen-notify.md))
 - [ ] **Hospedagem**: escolher o servidor gratuito (os jobs não podem "dormir") e registrar em ADR
 - [ ] **Acabamento visual** da interface
 

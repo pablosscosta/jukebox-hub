@@ -30,10 +30,12 @@ Já funciona:
   esperando por pessoa, sem duplicatas, e ninguém toca 3 seguidas se outra pessoa tem música na fila.
 - A fila toca sozinha no Spotify do host: a próxima música entra quando a atual acaba, e o host pode
   pular, remover ou tocar uma música direto pelo app do Spotify (ela "fura a fila" e a fila volta depois).
+- Fila e música tocando atualizadas ao vivo em todos os celulares (SSE), sem recarregar a página.
+- O host encerra a party (a música para e os convidados ficam sabendo na hora); sem atividade por 6 h,
+  ela encerra sozinha, e os dados são apagados no dia seguinte.
 - Lint, testes e checagens de segurança rodando no CI.
 
-Planejado para o MVP ([ROADMAP](docs/ROADMAP.md)):
-- Fila e faixa atual atualizadas ao vivo via SSE.
+Planejado para o MVP ([ROADMAP](docs/ROADMAP.md)): escolher a hospedagem e o acabamento visual.
 
 ## Tecnologias
 | Tecnologia | Por quê |
@@ -140,17 +142,21 @@ npm run format:check      # Prettier
 
 Os testes cobrem o login completo com o Spotify simulado pelo WebMock: troca do código, `state`
 inválido, PKCE, código de uso único, renovação e revogação de tokens; a criação da party (Premium,
-uma ativa por host, device disponível); a entrada do convidado; e a fila (busca, limite de 5, sem
-duplicatas, ordem justa testada por cenários); e o playback (avanço pelo job, pausa, música do host
-pelo Spotify, cliques repetidos e jobs atrasados que não pulam músicas a mais). No frontend, as telas de
-início, de retorno do login, do host e do convidado, incluindo busca, fila e controles do host. Cada funcionalidade do MVP entra com seus testes.
+uma ativa por host, device disponível); a entrada do convidado; a fila (busca, limite de 5, sem
+duplicatas, ordem justa testada por cenários); o playback (avanço pelo job, pausa, música do host pelo
+Spotify, cliques repetidos e jobs atrasados que não pulam músicas a mais); e o tempo real e o ciclo de
+vida (avisos SSE, encerrar, expirar e apagar parties). No frontend, as telas de início, de retorno do
+login, do host e do convidado, incluindo busca, fila ao vivo e controles do host. Cada funcionalidade
+do MVP entra com seus testes.
 
 ## Decisões e aprendizados
 - **Postgres em vez de sessões em memória**: o Puma roda vários processos que não dividem memória.
   "Party efêmera" virou regra de expiração. ([ADR 0002](docs/adr/0002-postgresql-party-efemera.md))
 - **`Party` e `Participant`**: evitam conflito com a sessão HTTP do Rails e com o model `Session` do
   gerador de autenticação. ([ADR 0003](docs/adr/0003-nomes-party-participant.md))
-- **SSE em vez de WebSocket**: a comunicação em tempo real é só do servidor para o cliente.
+- **SSE em vez de WebSocket, com aviso sem dados**: a comunicação em tempo real é só do servidor para
+  o cliente. O stream só diz "mudou" e a tela busca a fila pela API, então o token nunca vai na URL; um
+  único `LISTEN` por processo evita uma conexão do banco por celular.
   ([ADR 0004](docs/adr/0004-sse-com-postgres-listen-notify.md))
 - **Login no backend + token Bearer**: o client secret e os tokens do Spotify nunca vão ao navegador, e
   o frontend usa um token próprio da API, sem cookies entre domínios.
