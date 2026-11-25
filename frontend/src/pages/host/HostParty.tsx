@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useState } from 'react';
 import { ApiError, getMyParticipant, type Party } from '../../api/client';
 import { Jukebox } from '../party/Jukebox';
+import { EndPartyButton } from './EndPartyButton';
 import { PartyCard } from './PartyCard';
 
 type Props = {
@@ -42,6 +43,12 @@ export function HostParty({ party, token, onEnded, onUnauthorized }: Props) {
           onEnded={onEnded}
         />
       )}
+      <EndPartyButton
+        partyId={party.id}
+        token={token}
+        onEnded={onEnded}
+        onUnauthorized={onUnauthorized}
+      />
     </>
   );
 }

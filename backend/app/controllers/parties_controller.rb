@@ -1,5 +1,5 @@
 class PartiesController < ApplicationController
-  before_action :authenticate_host!, only: :create
+  before_action :authenticate_host!, only: %i[create finish]
 
   rescue_from Parties::Create::PremiumRequired do
     render_error("premium_required", "Para tocar músicas pela Jukebox Hub você precisa do Spotify Premium.",
@@ -36,5 +36,15 @@ class PartiesController < ApplicationController
     party = Parties::Create.call(host: current_host, name: params[:name], device_id: params[:deviceId],
                                  spotify: spotify_api)
     render json: party_json(party), status: :created
+  end
+
+  # POST /parties/:id/end
+  # The host ends the party: the music stops and every open screen learns it. Ending it again is fine.
+  def finish
+    party = current_host.parties.find_by(id: params[:id])
+    return render_party_not_found unless party
+
+    Parties::End.call(party:, spotify: spotify_api)
+    head :no_content
   end
 end

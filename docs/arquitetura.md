@@ -19,8 +19,11 @@ Segue as convenções do Rails, sem camadas extras:
 - `app/models`: entidades (`Party`, `Participant`, `QueueItem`), validações e regras simples.
 - `app/services`: casos de uso com mais de um passo (ex.: `QueueItems::Add`, `Playback::Advance`).
 - `app/clients/spotify`: cliente HTTP da Spotify Web API, isolado para ser substituído nos testes.
-- `app/jobs`: tarefas em background com Solid Queue, no mesmo Postgres e rodando dentro do Puma
-  (`CheckPlaybackJob` avança a fila; depois, expirar parties).
+- `app/jobs`: tarefas em background com Solid Queue, no mesmo Postgres e rodando dentro do Puma:
+  `CheckPlaybackJob` avança a fila; `ExpirePartiesJob` (a cada 10 min) encerra parties vencidas;
+  `DeleteEndedPartiesJob` (a cada hora) apaga os dados de parties encerradas há mais de 24 h.
+- Tempo real: `PartyEvents` publica um aviso com `NOTIFY` a cada mudança, e um `LISTEN` por processo
+  repassa aos streams SSE abertos (`EventsController`).
 
 ## Fluxos principais
 1. **Criar party**: o host entra com o Spotify (Authorization Code + PKCE, feito todo no backend) e recebe
@@ -52,8 +55,9 @@ Segue as convenções do Rails, sem camadas extras:
 - A Spotify Web API não avisa quando uma música acaba ou quando o host dá play pelo app do Spotify: a
   jukebox precisa perguntar. Por isso o avanço é por job agendado que confere antes de agir
   ([ADR 0008](adr/0008-avanco-da-fila.md)).
-- Cada conexão SSE ocupa uma thread do Puma. O número de threads (`RAILS_MAX_THREADS`) e o
-  heartbeat/timeout das conexões precisam ser dimensionados.
+- Cada stream SSE aberto ocupa uma thread do Puma (mas não uma conexão do banco). O Puma roda com 32
+  threads (`PUMA_MAX_THREADS`) e o pool do banco é separado (`DB_POOL`). Em desenvolvimento, editar o
+  código com streams abertos atrasa as requisições até o stream fechar (no máximo 30 s em dev).
 
 ## Deploy
 No Render ([`render.yaml`](../render.yaml)): web service para a API (com Solid Queue rodando dentro do

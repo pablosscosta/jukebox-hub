@@ -166,6 +166,12 @@ function partyPath(partyId: string, path: string) {
   return `/parties/${encodeURIComponent(partyId)}${path}`;
 }
 
+// The live stream of the party's notices (SSE). It needs no token: it carries no data, only what
+// changed, and each screen then reloads through the authenticated calls below.
+export function partyEventsUrl(partyId: string) {
+  return `${API_URL}${partyPath(partyId, '/events')}`;
+}
+
 export function searchTracks(partyId: string, query: string, token: string) {
   const params = new URLSearchParams({ q: query });
   return request<Track[]>(partyPath(partyId, `/search?${params.toString()}`), {}, token);
@@ -196,6 +202,15 @@ export function removeFromQueue(partyId: string, itemId: string, token: string) 
   return request<undefined>(
     partyPath(partyId, `/queue/${encodeURIComponent(itemId)}`),
     { method: 'DELETE' },
+    token,
+  );
+}
+
+// Host only: ends the party, stops the music and tells every open screen.
+export function endParty(partyId: string, token: string) {
+  return request<undefined>(
+    `/parties/${encodeURIComponent(partyId)}/end`,
+    { method: 'POST' },
     token,
   );
 }

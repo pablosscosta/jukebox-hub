@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { getParticipantToken, saveParticipantToken } from '../../auth/participantToken';
-import { mockApi, renderAt } from '../../test/utils';
+import { emitPartyEvent, mockApi, openStreams, renderAt } from '../../test/utils';
 
 // The jukebox is tested through the guest page, the way a guest uses it.
 const partyId = '3f9c0000-0000-0000-0000-000000000001';
@@ -100,11 +100,38 @@ describe('Jukebox', () => {
     );
     const list = await screen.findByRole('list', { name: 'Próximas músicas' });
     expect(list).toHaveTextContent('Garota de Ipanema');
-    expect(screen.getByRole('button', { name: 'Adicionar Garota de Ipanema' })).toHaveTextContent(
-      'Na fila',
-    );
     const searchCall = fetchMock.mock.calls.find(([url]) => url.includes('/search'));
     expect(new URL(searchCall?.[0] ?? '').searchParams.get('q')).toBe('ipanema');
+  });
+
+  it('clears the search after adding a song', async () => {
+    openJoinedParty({
+      [`GET ${partyPath}/queue`]: [queue(), queue([queueItem(ipanema, '10')])],
+      [`GET ${partyPath}/search`]: { status: 200, body: [ipanema, wave] },
+      [`POST ${partyPath}/queue`]: { status: 201, body: queueItem(ipanema, '10') },
+    });
+
+    await search('ipanema');
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Adicionar Garota de Ipanema' }),
+    );
+
+    await screen.findByRole('status');
+    expect(screen.queryByRole('list', { name: 'Resultados da busca' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Buscar música ou artista')).toHaveValue('');
+  });
+
+  it('clears the search with the button', async () => {
+    openJoinedParty({
+      [`GET ${partyPath}/queue`]: queue(),
+      [`GET ${partyPath}/search`]: { status: 200, body: [wave] },
+    });
+
+    await search('wave');
+    await userEvent.click(await screen.findByRole('button', { name: 'Limpar' }));
+
+    expect(screen.queryByRole('list', { name: 'Resultados da busca' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Buscar música ou artista')).toHaveValue('');
   });
 
   it("doesn't offer songs that are already in the queue", async () => {
@@ -164,15 +191,34 @@ describe('Jukebox', () => {
     expect(await screen.findByText('Nenhuma música encontrada.')).toBeInTheDocument();
   });
 
-  it('reloads the queue with the refresh button', async () => {
+  it('updates the queue by itself when the party says it changed', async () => {
     openJoinedParty({
       [`GET ${partyPath}/queue`]: [queue(), queue([queueItem(wave, '11')])],
     });
     await screen.findByText(/A fila está vazia/);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Atualizar' }));
+    emitPartyEvent('queue_changed');
 
     expect(await screen.findByRole('list', { name: 'Próximas músicas' })).toHaveTextContent('Wave');
+  });
+
+  it('follows the live stream of this party, without sending the token', async () => {
+    openJoinedParty({ [`GET ${partyPath}/queue`]: queue() });
+    await screen.findByText(/A fila está vazia/);
+
+    expect(openStreams().map((source) => source.url)).toEqual([
+      `http://127.0.0.1:3000${partyPath}/events`,
+    ]);
+  });
+
+  it('tells the guest right away when the host ends the party', async () => {
+    openJoinedParty({ [`GET ${partyPath}/queue`]: queue() });
+    await screen.findByText(/A fila está vazia/);
+
+    emitPartyEvent('party_ended');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Essa party já terminou.');
+    expect(openStreams()).toEqual([]);
   });
 
   it('asks the guest to join again when their token stops working', async () => {

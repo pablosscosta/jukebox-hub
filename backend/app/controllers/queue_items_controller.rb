@@ -3,11 +3,8 @@ class QueueItemsController < ApplicationController
 
   before_action :require_open_party, :authenticate_participant!
   before_action :require_host!, only: :destroy
-  before_action :check_spotify_playback, only: :index
-
-  # Someone opening the queue also makes the jukebox look at Spotify (e.g. the host played a song
-  # straight from the Spotify app), but at most once per interval for the whole party.
-  PLAYBACK_CHECK_INTERVAL = 20.seconds
+  # Someone opening the queue also makes the jukebox look at Spotify (see Playback::CheckIfDue).
+  before_action -> { Playback::CheckIfDue.call(@party) }, only: :index
 
   rescue_from QueueItems::Add::InvalidTrack do
     render_error("invalid_track", "Não encontramos essa música no Spotify.", status: :unprocessable_content)
@@ -55,16 +52,6 @@ class QueueItemsController < ApplicationController
   end
 
   private
-
-  def check_spotify_playback
-    return unless %w[playing external].include?(@party.playback_state)
-    return unless @party.claim_playback_check!(PLAYBACK_CHECK_INTERVAL)
-
-    Playback::Reconcile.call(party: @party, spotify: spotify_api(@party.host))
-  rescue Spotify::Error, SpotifyAuth::ReauthenticationRequired => e
-    # Showing the queue doesn't depend on Spotify: if the check fails, it shows what it knows.
-    Rails.logger.warn("[playback] check on read failed for party #{@party.id}: #{e.class}")
-  end
 
   def queue_item_json(item)
     { id: item.id.to_s, trackId: item.track_id, title: item.title, artist: item.artist,

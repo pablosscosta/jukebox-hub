@@ -9,6 +9,10 @@ module Playback
     # :unchanged when the song being followed is still on (playing or paused); :changed otherwise.
     Result = Data.define(:status, :playback)
 
+    # Right after the jukebox tells Spotify to play, Spotify may still report the old state for a
+    # second or two. Within this window a mismatch means nothing yet.
+    STARTUP_GRACE = 10.seconds
+
     def self.call(...) = new(...).call
 
     def initialize(party:, spotify:, ending: false)
@@ -30,17 +34,25 @@ module Playback
     private
 
     def reconcile_queue_song(item)
-      return :unchanged if still_on?(item.track_id)
+      return :unchanged if just_started?(item) || still_on?(item.track_id)
 
-      if @ending || @playback&.track_id == item.track_id
+      if song_ended?(item)
         Advance.call(party: @party, spotify: @spotify, expected_current_id: item.id)
-      elsif @playback.nil? || !@playback.playing
+      elsif spotify_stopped?
         # Spotify stopped in the middle of the song (closed, or stopped on another song).
         Stop.call(party: @party, expected_current_id: item.id)
       else
         FollowExternal.call(party: @party, playback: @playback, expected_watch_key: "item:#{item.id}")
       end
       :changed
+    end
+
+    def song_ended?(item)
+      @ending || @playback&.track_id == item.track_id
+    end
+
+    def spotify_stopped?
+      @playback.nil? || !@playback.playing
     end
 
     def reconcile_external
@@ -54,6 +66,10 @@ module Playback
         Advance.call(party: @party, spotify: @spotify, expected_current_id: nil)
       end
       :changed
+    end
+
+    def just_started?(item)
+      item.started_at.present? && item.started_at > STARTUP_GRACE.ago
     end
 
     def still_on?(track_id)

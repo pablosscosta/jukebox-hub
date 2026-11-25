@@ -51,7 +51,7 @@ module Parties
     # An expired party stays "active" until something closes it. Closing it here keeps it from
     # blocking the new one.
     def end_expired_parties
-      @host.parties.active.where(expires_at: ...Time.current).find_each(&:ended!)
+      @host.parties.overdue.find_each { |party| Parties::End.call(party:) }
     end
 
     def find_device!

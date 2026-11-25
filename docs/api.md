@@ -42,7 +42,9 @@ O login é feito por navegação no navegador (não por `fetch`):
   - `422 invalid_party`: nome vazio ou com mais de 60 caracteres.
 - `GET /parties/{id}`: dados públicos da party (`PublicParty`), sem login. `404 party_not_found` se o
   id não existe. Uma party expirada aparece como `ended`.
-- `POST /parties/{id}/end`: encerra a party. Só o host.
+- `POST /parties/{id}/end` ✅: o host encerra a party (token do host). Pausa o Spotify e avisa todas as
+  telas (`party_ended`). `204`, também se ela já tinha acabado; `404 party_not_found` se a party não é
+  desse host.
 - `POST /parties/{id}/participants`: o convidado entra, sem login. Body `{ "displayName": "Ana" }`
   (opcional; sem nome vira "Convidado N"). Devolve `201` com
   `{ "participantToken": "...", "participant": Participant }`. Erros: `404 party_not_found`,
@@ -82,8 +84,10 @@ Spotify não está aberto no device da party.
 - `POST /parties/{id}/playback/start`: toca a fila quando nada está tocando (por exemplo, depois de o
   Spotify parar) ou volta para a fila no lugar da música do host. Não pula a música que já está tocando.
 
-### Eventos
-- `GET /parties/{id}/events`: stream SSE (`text/event-stream`).
+### Eventos ✅
+- `GET /parties/{id}/events`: stream SSE (`text/event-stream`), sem token. Manda só avisos, sem dados
+  (ver abaixo e [ADR 0004](adr/0004-sse-com-postgres-listen-notify.md)). `404 party_not_found` se a
+  party não existe.
 
 ## DTOs
 
@@ -185,8 +189,13 @@ Um `Track` mais:
 - `idle`: nada tocando.
 
 ## Eventos SSE
-| Evento | Quando | Payload |
+Todos com `data: {}`: o evento diz o que mudou, e a tela busca o estado pela API.
+
+| Evento | Quando | O que a tela faz |
 | --- | --- | --- |
-| `queue_updated` | fila alterada | lista de `QueueItem` |
-| `track_started` | nova faixa começou | `QueueItem` |
-| `party_ended` | party encerrada ou expirada | `{ "partyId": "string" }` |
+| `connected` | ao abrir o stream (e a cada reconexão) | recarrega a fila (pega o que perdeu offline) |
+| `queue_changed` | música adicionada, tocada, pulada ou removida; música do host pelo Spotify | recarrega a fila |
+| `party_ended` | o host encerrou ou a party expirou | mostra que a party terminou e fecha o stream |
+
+Entre os eventos vai um comentário `: heartbeat` a cada 15 s. O servidor fecha o stream depois de
+alguns minutos e o `EventSource` reconecta sozinho.

@@ -3,7 +3,9 @@
 default: &default
   adapter: postgresql
   encoding: unicode
-  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
+  # Requests hold a connection only while they query, and live streams hold none. Solid Queue (inside
+  # Puma) and the events listener need a few of their own.
+  max_connections: <%= ENV.fetch("DB_POOL", 10) %>
   host: <%= ENV.fetch("DATABASE_HOST", nil) %>
   port: <%= ENV.fetch("DATABASE_PORT", 5432) %>
   username: <%= ENV.fetch("DATABASE_USERNAME", nil) %>

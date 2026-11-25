@@ -103,4 +103,35 @@ RSpec.describe "Parties" do
       expect(Party.count).to eq(0)
     end
   end
+
+  describe "POST /parties/:id/end" do
+    let(:host) { create(:host, access_token: "host-access-token") }
+    let(:party) { create(:party, host:) }
+
+    before { stub_spotify_pause }
+
+    def end_party(target = party, bearer: HostToken.issue!(host:, kind: :access))
+      post "/parties/#{target.id}/end", headers: { "Authorization" => "Bearer #{bearer}" }
+    end
+
+    it "lets the host end the party and stops the music" do
+      end_party
+
+      expect(response).to have_http_status(:no_content)
+      expect(party.reload).to be_ended
+      expect(a_request(:put, SpotifyHelpers::PAUSE_URL).with(query: hash_including({}))).to have_been_made
+    end
+
+    it "answers 404 for another host's party" do
+      end_party(create(:party))
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "answers 401 without the host's token" do
+      end_party(bearer: "unknown")
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
 end

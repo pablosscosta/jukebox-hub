@@ -137,4 +137,14 @@ RSpec.describe Spotify::ApiClient do
       expect(client.playback).to be_nil
     end
   end
+
+  describe "#pause" do
+    it "pauses the music on the given device" do
+      stub_spotify_pause
+
+      client.pause(device_id: "device-1")
+
+      expect(a_request(:put, SpotifyHelpers::PAUSE_URL).with(query: { "device_id" => "device-1" })).to have_been_made
+    end
+  end
 end

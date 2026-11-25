@@ -39,7 +39,7 @@ module Playback
 
       @spotify.play(device_id: @party.device_id, track_id: item.track_id)
       item.update!(status: :playing, started_at: Time.current)
-      @party.update!(playback_paused: false)
+      @party.update!(playback_paused: false, expires_at: Party::LIFETIME.from_now)
       # The job is stored in the same Postgres (Solid Queue), so it is saved in this transaction:
       # either the song starts and its check is scheduled, or neither happens.
       CheckPlaybackJob.schedule_for(item)

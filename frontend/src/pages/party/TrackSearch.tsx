@@ -47,12 +47,19 @@ export function TrackSearch({
     }
   }
 
+  function clearSearch() {
+    setQuery('');
+    setResults(null);
+  }
+
   async function handleAdd(track: Track) {
     setAddingId(track.trackId);
     setMessage(null);
     try {
       await addToQueue(partyId, track.trackId, token);
       setMessage({ text: `"${track.title}" entrou na fila.`, isError: false });
+      // The song is in: clear the search so the queue gets the screen back.
+      clearSearch();
       onAdded();
     } catch (err) {
       showError(err);
@@ -87,6 +94,17 @@ export function TrackSearch({
         <button type="submit" disabled={searching || query.trim() === ''}>
           {searching ? 'Buscando...' : 'Buscar'}
         </button>
+        {results && (
+          <button
+            type="button"
+            onClick={() => {
+              clearSearch();
+              setMessage(null);
+            }}
+          >
+            Limpar
+          </button>
+        )}
       </form>
 
       {message && <p role={message.isError ? 'alert' : 'status'}>{message.text}</p>}
