@@ -27,8 +27,17 @@ const wave = { ...ipanema, trackId: 'wave', title: 'Wave' };
 function queueItem(track: typeof ipanema, id: string, addedBy = { id: '1', displayName: 'Ana' }) {
   return { ...track, id, status: 'pending', addedBy, addedAt: '2026-11-24T18:00:00Z' };
 }
-function queue(upNext: ReturnType<typeof queueItem>[] = []) {
-  return { status: 200, body: { nowPlaying: null, upNext, maxPendingPerParticipant: 5 } };
+function queue(upNext: ReturnType<typeof queueItem>[] = [], extra: Record<string, unknown> = {}) {
+  return {
+    status: 200,
+    body: {
+      nowPlaying: null,
+      upNext,
+      maxPendingPerParticipant: 5,
+      playbackState: 'idle',
+      ...extra,
+    },
+  };
 }
 const error = (status: number, code: string, message = 'x') => ({
   status,
@@ -182,5 +191,46 @@ describe('Jukebox', () => {
     await search('wave');
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Essa party já terminou.');
+  });
+
+  it('shows the song that is playing, without host buttons for a guest', async () => {
+    openJoinedParty({
+      [`GET ${partyPath}/queue`]: queue([queueItem(wave, '11')], {
+        nowPlaying: { ...queueItem(ipanema, '10'), status: 'playing' },
+        playbackState: 'playing',
+      }),
+    });
+
+    expect(await screen.findByText('Garota de Ipanema')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Pular' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Remover/ })).not.toBeInTheDocument();
+  });
+
+  it('tells guests when the host paused the jukebox', async () => {
+    openJoinedParty({
+      [`GET ${partyPath}/queue`]: queue([queueItem(wave, '11')], { playbackState: 'paused' }),
+    });
+
+    expect(await screen.findByText('A fila está pausada pelo host.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Tocar' })).not.toBeInTheDocument();
+  });
+
+  it("shows the host's own song from Spotify as playing", async () => {
+    openJoinedParty({
+      [`GET ${partyPath}/queue`]: queue([queueItem(wave, '11')], {
+        playbackState: 'external',
+        externalTrack: { ...ipanema, title: 'Have a Nice Day', artist: 'Stereophonics' },
+      }),
+    });
+
+    expect(await screen.findByText('Have a Nice Day')).toBeInTheDocument();
+    expect(screen.getByText('Spotify do host')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Voltar para a fila' })).not.toBeInTheDocument();
+  });
+
+  it('just says nothing is playing when Spotify stopped and the queue is empty', async () => {
+    openJoinedParty({ [`GET ${partyPath}/queue`]: queue([], { playbackState: 'paused' }) });
+
+    expect(await screen.findByText('Nada tocando agora.')).toBeInTheDocument();
   });
 });

@@ -37,6 +37,7 @@ export function HostParty({ party, token, onEnded, onUnauthorized }: Props) {
           partyId={party.id}
           token={token}
           participantId={participantId}
+          isHost
           onUnauthorized={onUnauthorized}
           onEnded={onEnded}
         />

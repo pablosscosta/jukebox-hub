@@ -136,6 +136,129 @@ describe('HostPage', () => {
       expect(new Headers(init.headers).get('Authorization')).toBe('Bearer host-token');
     });
 
+    describe('playback controls', () => {
+      const song = {
+        trackId: 'wave',
+        title: 'Wave',
+        artist: 'Tom Jobim',
+        durationMs: 200000,
+        imageUrl: null,
+        addedBy: { id: '2', displayName: 'Ana' },
+        addedAt: '2026-11-24T18:00:00Z',
+      };
+      const playing = {
+        ...song,
+        id: '10',
+        trackId: 'ipanema',
+        title: 'Garota de Ipanema',
+        status: 'playing',
+      };
+      const waiting = { ...song, id: '11', status: 'pending' };
+      const queueWith = (extra: Record<string, unknown>) => ({
+        status: 200,
+        body: { ...emptyQueue, upNext: [waiting], playbackState: 'playing', ...extra },
+      });
+
+      function openHostParty(routes: Parameters<typeof mockApi>[0]) {
+        const fetchMock = mockApi({
+          'GET /me': { status: 200, body: host },
+          'GET /me/party': { status: 200, body: party },
+          ...partyRoutes,
+          ...routes,
+        });
+        renderAt('/host');
+        return fetchMock;
+      }
+
+      it('skips the song that is playing', async () => {
+        const fetchMock = openHostParty({
+          'GET /parties/party-1/queue': [
+            queueWith({ nowPlaying: playing }),
+            queueWith({ nowPlaying: { ...waiting, status: 'playing' }, upNext: [] }),
+          ],
+          'POST /parties/party-1/playback/next': { status: 204 },
+        });
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Pular' }));
+
+        expect(await screen.findByText(/A fila está vazia/)).toBeInTheDocument();
+        expect(fetchMock).toHaveBeenCalledWith(
+          'http://127.0.0.1:3000/parties/party-1/playback/next',
+          expect.objectContaining({ method: 'POST' }),
+        );
+      });
+
+      it('removes a song from the queue', async () => {
+        const fetchMock = openHostParty({
+          'GET /parties/party-1/queue': [
+            queueWith({ nowPlaying: playing }),
+            queueWith({ nowPlaying: playing, upNext: [] }),
+          ],
+          'DELETE /parties/party-1/queue/11': { status: 204 },
+        });
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Remover Wave' }));
+
+        expect(await screen.findByText(/A fila está vazia/)).toBeInTheDocument();
+        expect(fetchMock).toHaveBeenCalledWith(
+          'http://127.0.0.1:3000/parties/party-1/queue/11',
+          expect.objectContaining({ method: 'DELETE' }),
+        );
+      });
+
+      it('starts the queue again after Spotify stopped', async () => {
+        openHostParty({
+          'GET /parties/party-1/queue': [
+            queueWith({ playbackState: 'paused' }),
+            queueWith({ nowPlaying: { ...waiting, status: 'playing' }, upNext: [] }),
+          ],
+          'POST /parties/party-1/playback/start': { status: 204 },
+        });
+
+        expect(await screen.findByText(/O Spotify parou no meio da música/)).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: 'Tocar' }));
+
+        expect(await screen.findByRole('button', { name: 'Pular' })).toBeInTheDocument();
+      });
+
+      it('goes back to the queue while their own Spotify song plays', async () => {
+        const fetchMock = openHostParty({
+          'GET /parties/party-1/queue': [
+            queueWith({
+              playbackState: 'external',
+              externalTrack: { ...song, title: 'Have a Nice Day' },
+            }),
+            queueWith({ nowPlaying: { ...waiting, status: 'playing' }, upNext: [] }),
+          ],
+          'POST /parties/party-1/playback/start': { status: 204 },
+        });
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Voltar para a fila' }));
+
+        expect(await screen.findByRole('button', { name: 'Pular' })).toBeInTheDocument();
+        expect(fetchMock).toHaveBeenCalledWith(
+          'http://127.0.0.1:3000/parties/party-1/playback/start',
+          expect.objectContaining({ method: 'POST' }),
+        );
+      });
+
+      it('explains when Spotify is not open on the device', async () => {
+        const message =
+          'O Spotify não está aberto em pablo-note. Abra o Spotify nele e toque de novo.';
+        openHostParty({
+          'GET /parties/party-1/queue': queueWith({ playbackState: 'idle' }),
+          'POST /parties/party-1/playback/start': {
+            status: 422,
+            body: { error: { code: 'device_unavailable', message } },
+          },
+        });
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Tocar' }));
+
+        expect(await screen.findByRole('alert')).toHaveTextContent(message);
+      });
+    });
+
     it('shows a QR code that guests can scan', async () => {
       mockApi({
         'GET /me': { status: 200, body: host },
