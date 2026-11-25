@@ -51,6 +51,9 @@ services:
       # The API's address (https://...onrender.com).
       - key: VITE_API_URL
         sync: false
+      # Optional: shown to Spotify accounts not yet allowed in the app, so they know who to ask.
+      - key: VITE_CONTACT_EMAIL
+        sync: false
     routes:
       - type: rewrite
         source: /*

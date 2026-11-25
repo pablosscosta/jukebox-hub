@@ -16,8 +16,14 @@ uma festa escolhem a próxima faixa pelo celular, sem precisar de conta.
 > `v0-legado`.
 
 ## Demonstração
-> **TODO:** adicionar o link do deploy no Render e um GIF do fluxo (host cria a party → convidado
-> adiciona uma música) em `docs/assets/`.
+No ar em **[jukebox-hub-web.onrender.com](https://jukebox-hub-web.onrender.com)** (plano gratuito: o primeiro
+acesso pode levar até 1 minuto, enquanto a API acorda).
+
+Criar parties exige Spotify Premium e, nesta versão de demonstração, uma conta liberada no app do
+Spotify (o modo de desenvolvimento do Spotify aceita até 5). Convidados entram pelo link, sem conta.
+
+> **TODO:** adicionar um GIF do fluxo (host cria a party → convidado adiciona uma música) em
+> `docs/assets/`.
 
 ## Funcionalidades
 Já funciona:
@@ -135,7 +141,8 @@ dorme sem acessos e o banco expira em 30 dias ([ADR 0009](docs/adr/0009-hospedag
 2. Preencha as variáveis marcadas como secretas:
    - API: `FRONTEND_ORIGIN` (endereço do site), `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET` e
      `SPOTIFY_REDIRECT_URI` (`<endereço da API>/auth/spotify/callback`).
-   - Site: `VITE_API_URL` (endereço da API).
+   - Site: `VITE_API_URL` (endereço da API) e, opcional, `VITE_CONTACT_EMAIL` (para quem uma conta
+     ainda não liberada deve pedir acesso).
 3. No painel do Spotify, cadastre a mesma redirect URI e as contas que vão criar parties (até 5).
 4. Quando o Render avisar que o banco gratuito vai expirar, crie um novo e atualize o `DATABASE_URL`.
 

@@ -46,6 +46,8 @@ Opções avaliadas em nov/2026:
 - **O banco gratuito expira em 30 dias** e não tem backup: ele é recriado quando o Render avisar. Como
   a party é efêmera ([ADR 0002](0002-postgresql-party-efemera.md)), perde-se pouco; os hosts fazem login
   de novo.
-- O modo de desenvolvimento do Spotify aceita até 5 contas de host, cadastradas no painel do Spotify.
+- O modo de desenvolvimento do Spotify aceita até 5 contas de host, cadastradas à mão no painel do
+  Spotify (não há API para isso). Uma conta não cadastrada loga no Spotify mas recebe 403 da API: a
+  tela de login explica e mostra o contato definido em `VITE_CONTACT_EMAIL`.
 - **Se o app crescer,** o próximo passo é um servidor que não dorme (a VM da Oracle com Kamal, ou um
   plano pago). A imagem Docker já serve para isso.
