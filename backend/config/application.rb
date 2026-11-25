@@ -41,6 +41,10 @@ module JukeboxHub
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
 
+    # Background jobs (moving the queue to the next song) run on Solid Queue, stored in the main
+    # Postgres database. See docs/adr/0008-avanco-da-fila.md.
+    config.active_job.queue_adapter = :solid_queue
+
     # Cookies are used only to carry the OAuth state between /auth/spotify and its callback.
     config.middleware.use ActionDispatch::Cookies
 
