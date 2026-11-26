@@ -1,0 +1,15 @@
+{
+  "name": "jukebox-hub-demo",
+  "private": true,
+  "description": "Records the demo video of the frontend with a mocked API (dev-only tool).",
+  "type": "module",
+  "scripts": {
+    "record": "node record.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.60.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
