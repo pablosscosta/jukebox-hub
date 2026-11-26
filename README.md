@@ -14,6 +14,11 @@ uma festa escolhem a próxima faixa pelo celular, sem precisar de conta.
 > **Status:** MVP completo e no ar. Os próximos passos estão no [ROADMAP](docs/ROADMAP.md).
 
 ## Demonstração
+![Host no desktop e convidado no celular: o convidado adiciona uma música e a fila do host atualiza ao vivo](docs/assets/demo.gif)
+
+*Demonstração com dados fictícios: a interface é a real, mas a API é simulada e a música não toca de
+verdade. Como regravar: [docs/demo](docs/demo/README.md).*
+
 No ar em **[jukebox-hub-web.onrender.com](https://jukebox-hub-web.onrender.com)** (plano gratuito: o primeiro
 acesso pode levar até 1 minuto).
 
